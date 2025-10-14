@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Empresas - Sistema de Moeda Estudantil</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>Sistema de Moeda Estudantil</h1>
+        <p>Gerenciamento de Empresas Parceiras</p>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-link">Início</a>
+            <a href="alunos.html" class="nav-link">Alunos</a>
+            <a href="empresas.html" class="nav-link active">Empresas</a>
+            <a href="sobre.html" class="nav-link">Sobre</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Form Card -->
+        <div class="card" id="formCard">
+            <div class="card-header">
+                <h2 class="card-title" id="formTitle">Cadastrar Nova Empresa</h2>
+                <p class="card-subtitle">Preencha os dados da empresa parceira para cadastro no sistema</p>
+            </div>
+            
+            <form id="empresaForm">
+                <input type="hidden" id="empresaId">
+                
+                <!-- Dados da empresa -->
+                <h3>Dados da Empresa</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome" class="form-label">Nome/Razão Social *</label>
+                        <input type="text" id="nome" name="nome" class="form-input" required>
+                        <div class="form-error" id="nomeError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nomeFantasia" class="form-label">Nome Fantasia *</label>
+                        <input type="text" id="nomeFantasia" name="nomeFantasia" class="form-input" required>
+                        <div class="form-error" id="nomeFantasiaError"></div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cnpj" class="form-label">CNPJ *</label>
+                        <input type="text" id="cnpj" name="cnpj" class="form-input" placeholder="00.000.000/0000-00" required>
+                        <div class="form-error" id="cnpjError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefone" class="form-label">Telefone</label>
+                        <input type="text" id="telefone" name="telefone" class="form-input" placeholder="(00) 00000-0000">
+                        <div class="form-error" id="telefoneError"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="endereco" class="form-label">Endereço *</label>
+                    <input type="text" id="endereco" name="endereco" class="form-input" required>
+                    <div class="form-error" id="enderecoError"></div>
+                </div>
+                
+                <!-- Dados de acesso -->
+                <h3>Dados de Acesso</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" id="email" name="email" class="form-input" required>
+                        <div class="form-error" id="emailError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="senha" class="form-label">Senha *</label>
+                        <input type="password" id="senha" name="senha" class="form-input" required>
+                        <div class="form-error" id="senhaError"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="descricao" class="form-label">Descrição da Empresa</label>
+                    <textarea id="descricao" name="descricao" class="form-input" rows="4" placeholder="Descreva os produtos/serviços oferecidos pela empresa"></textarea>
+                    <div class="form-error" id="descricaoError"></div>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Cadastrar Empresa</button>
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- List Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Lista de Empresas Parceiras</h3>
+                <p class="card-subtitle">Visualize e gerencie as empresas parceiras cadastradas</p>
+            </div>
+            
+            <!-- Search and filters -->
+            <div class="form-row mb-2">
+                <div class="form-group">
+                    <label for="searchNome" class="form-label">Buscar por Nome</label>
+                    <input type="text" id="searchNome" class="form-input" placeholder="Digite o nome da empresa">
+                </div>
+                <div class="form-group">
+                    <label for="searchNomeFantasia" class="form-label">Buscar por Nome Fantasia</label>
+                    <input type="text" id="searchNomeFantasia" class="form-input" placeholder="Digite o nome fantasia">
+                </div>
+            </div>
+            
+            <div class="btn-group mb-2">
+                <button class="btn btn-primary" id="searchBtn">Buscar</button>
+                <button class="btn btn-secondary" id="clearBtn">Limpar</button>
+                <button class="btn btn-success" id="refreshBtn">Atualizar Lista</button>
+            </div>
+            
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table" id="empresasTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome/Razão Social</th>
+                            <th>Nome Fantasia</th>
+                            <th>CNPJ</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Vantagens</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="empresasTableBody">
+                        <!-- Dados serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/empresas.js"></script>
+</body>
+</html>

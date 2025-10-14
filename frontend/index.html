@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Moeda Estudantil</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>Sistema de Moeda Estudantil</h1>
+        <p>Estimulando o reconhecimento do mérito através de uma moeda virtual</p>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="index.html" class="nav-link active">Início</a>
+            <a href="pages/alunos.html" class="nav-link">Alunos</a>
+            <a href="pages/empresas.html" class="nav-link">Empresas</a>
+            <a href="pages/sobre.html" class="nav-link">Sobre</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Bem-vindo ao Sistema de Moeda Estudantil</h2>
+                <p class="card-subtitle">Lab03S02 - Implementação do modelo ER e CRUDs</p>
+            </div>
+            
+            <div class="card-content">
+                <h3>Sobre o Sistema</h3>
+                <p>Este sistema foi desenvolvido para estimular o reconhecimento do mérito estudantil através de uma moeda virtual. Professores podem distribuir moedas aos alunos como forma de reconhecimento, e os alunos podem trocar essas moedas por vantagens oferecidas por empresas parceiras.</p>
+                
+                <h3>Funcionalidades Implementadas</h3>
+                <ul>
+                    <li><strong>Modelo ER Completo:</strong> Estrutura do banco de dados com todas as entidades necessárias</li>
+                    <li><strong>CRUD de Alunos:</strong> Cadastro, listagem, edição e exclusão de alunos</li>
+                    <li><strong>CRUD de Empresas:</strong> Cadastro, listagem, edição e exclusão de empresas parceiras</li>
+                    <li><strong>Arquitetura MVC:</strong> Backend em Spring Boot com padrão Repository</li>
+                    <li><strong>API REST:</strong> Endpoints para comunicação frontend-backend</li>
+                    <li><strong>Interface Responsiva:</strong> Frontend em HTML/CSS/JavaScript</li>
+                </ul>
+                
+                <h3>Tecnologias Utilizadas</h3>
+                <div class="form-row">
+                    <div>
+                        <h4>Backend</h4>
+                        <ul>
+                            <li>Java 17</li>
+                            <li>Spring Boot 3.1.5</li>
+                            <li>Spring Data JPA</li>
+                            <li>MySQL / H2 Database</li>
+                            <li>Lombok</li>
+                            <li>Bean Validation</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Frontend</h4>
+                        <ul>
+                            <li>HTML5</li>
+                            <li>CSS3 (Grid/Flexbox)</li>
+                            <li>JavaScript ES6+</li>
+                            <li>Fetch API</li>
+                            <li>Design Responsivo</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <a href="pages/alunos.html" class="btn btn-primary">Gerenciar Alunos</a>
+                    <a href="pages/empresas.html" class="btn btn-secondary">Gerenciar Empresas</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Estrutura do Banco de Dados</h3>
+            </div>
+            <div class="card-content">
+                <p>O sistema implementa as seguintes entidades principais:</p>
+                <ul>
+                    <li><strong>Usuario:</strong> Tabela base para autenticação (alunos, professores, empresas)</li>
+                    <li><strong>Aluno:</strong> Informações específicas dos estudantes</li>
+                    <li><strong>Professor:</strong> Informações dos docentes que distribuem moedas</li>
+                    <li><strong>Empresa:</strong> Empresas parceiras que oferecem vantagens</li>
+                    <li><strong>Instituicao:</strong> Universidades e faculdades participantes</li>
+                    <li><strong>Vantagem:</strong> Produtos/serviços oferecidos pelas empresas</li>
+                    <li><strong>Transacao:</strong> Histórico de movimentação de moedas</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
