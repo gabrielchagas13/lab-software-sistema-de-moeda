@@ -3,7 +3,9 @@ package com.sistemamoeda.service;
 import com.sistemamoeda.dto.AlunoRequestDTO;
 import com.sistemamoeda.dto.AlunoResponseDTO;
 import com.sistemamoeda.model.*;
+import com.sistemamoeda.model.Instituicao;
 import com.sistemamoeda.repository.AlunoRepository;
+import com.sistemamoeda.repository.InstituicaoRepository;
 import com.sistemamoeda.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class AlunoService {
     
     private final AlunoRepository alunoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final InstituicaoRepository instituicaoRepository;
     
     // Criar novo aluno
     public AlunoResponseDTO criarAluno(AlunoRequestDTO request) {
@@ -43,10 +46,14 @@ public class AlunoService {
         );
         usuario = usuarioRepository.save(usuario);
         
+        // Buscar instituição
+        Instituicao instituicao = instituicaoRepository.findById(request.getInstituicaoId())
+                .orElseThrow(() -> new EntityNotFoundException("Instituição não encontrada"));
+        
         // Criar aluno
         Aluno aluno = new Aluno(
                 usuario,
-                request.getInstituicao().trim(),
+                instituicao,
                 request.getCpf().trim(),
                 request.getRg().trim(),
                 request.getEndereco().trim(),
@@ -100,8 +107,14 @@ public class AlunoService {
         }
         usuarioRepository.save(usuario);
         
+        // Buscar instituição se mudou
+        if (!aluno.getInstituicao().getId().equals(request.getInstituicaoId())) {
+            Instituicao instituicao = instituicaoRepository.findById(request.getInstituicaoId())
+                    .orElseThrow(() -> new EntityNotFoundException("Instituição não encontrada"));
+            aluno.setInstituicao(instituicao);
+        }
+        
         // Atualizar dados do aluno
-        aluno.setInstituicao(request.getInstituicao());
         aluno.setCpf(request.getCpf());
         aluno.setRg(request.getRg());
         aluno.setEndereco(request.getEndereco());
@@ -122,8 +135,8 @@ public class AlunoService {
     
     // Buscar alunos por instituição
     @Transactional(readOnly = true)
-    public List<AlunoResponseDTO> buscarPorInstituicao(String instituicao) {
-        return alunoRepository.findByInstituicaoContainingIgnoreCase(instituicao)
+    public List<AlunoResponseDTO> buscarPorInstituicao(String nomeInstituicao) {
+        return alunoRepository.findByInstituicaoNomeContainingIgnoreCase(nomeInstituicao)
                 .stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
@@ -157,7 +170,8 @@ public class AlunoService {
         dto.setTipoUsuario(aluno.getUsuario().getTipoUsuario().name());
         dto.setDataCriacao(aluno.getUsuario().getDataCriacao());
         dto.setAtivo(aluno.getUsuario().getAtivo());
-        dto.setInstituicao(aluno.getInstituicao());
+        dto.setInstituicaoId(aluno.getInstituicao().getId());
+        dto.setInstituicaoNome(aluno.getInstituicao().getNome());
         dto.setCpf(aluno.getCpf());
         dto.setRg(aluno.getRg());
         dto.setEndereco(aluno.getEndereco());

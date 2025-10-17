@@ -23,7 +23,8 @@ public class AlunoResponseDTO {
     private Boolean ativo;
     
     // Dados específicos do aluno
-    private String instituicao;
+    private Long instituicaoId;
+    private String instituicaoNome;
     private String cpf;
     private String rg;
     private String endereco;

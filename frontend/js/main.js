@@ -21,8 +21,12 @@ const showAlert = (message, type = 'info') => {
     alertDiv.className = `alert alert-${type}`;
     alertDiv.textContent = message;
     
-    const container = document.querySelector('.container');
-    container.insertBefore(alertDiv, container.firstChild);
+    const container = document.querySelector('.container') || document.body;
+    if (container.firstChild) {
+        container.insertBefore(alertDiv, container.firstChild);
+    } else {
+        container.appendChild(alertDiv);
+    }
     
     setTimeout(() => {
         alertDiv.remove();
@@ -31,6 +35,10 @@ const showAlert = (message, type = 'info') => {
 
 const showSuccess = (message) => showAlert(message, 'success');
 const showError = (message) => showAlert(message, 'error');
+const showWarning = (message) => showAlert(message, 'warning');
+
+// Toast notifications (alias for showAlert)
+const showToast = (message, type = 'info') => showAlert(message, type);
 
 // Loading functions
 const showLoading = (element) => {
@@ -181,6 +189,8 @@ window.appUtils = {
     showAlert,
     showSuccess,
     showError,
+    showWarning,
+    showToast,
     showLoading,
     hideLoading,
     validateEmail,
@@ -190,3 +200,6 @@ window.appUtils = {
     maskCPF,
     maskCNPJ
 };
+
+// Global functions for backward compatibility
+window.showToast = showToast;

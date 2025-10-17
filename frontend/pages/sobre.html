@@ -4,117 +4,121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sobre o Sistema - Sistema de Moeda Estudantil</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <h1>Sistema de Moeda Estudantil</h1>
-        <p>Sobre o Projeto</p>
-    </header>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Sistema de Moedas</span>
+                    </h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="../index.html">
+                                <i class="fas fa-home"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="alunos.html">
+                                <i class="fas fa-user-graduate"></i>
+                                Alunos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="professores.html">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                Professores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="empresas.html">
+                                <i class="fas fa-building"></i>
+                                Empresas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="vantagens.html">
+                                <i class="fas fa-gift"></i>
+                                Vantagens
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="transacoes.html">
+                                <i class="fas fa-exchange-alt"></i>
+                                Transações
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="sobre.html">
+                                <i class="fas fa-info-circle"></i>
+                                Sobre
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
 
-    <!-- Navigation -->
-    <nav class="nav">
-        <div class="nav-container">
-            <a href="../index.html" class="nav-link">Início</a>
-            <a href="alunos.html" class="nav-link">Alunos</a>
-            <a href="empresas.html" class="nav-link">Empresas</a>
-            <a href="sobre.html" class="nav-link active">Sobre</a>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Sobre o Projeto</h1>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Lab03S02 - Modelo ER e CRUDs</h2>
+                        <p class="card-subtitle">Implementação do banco de dados e interfaces de gerenciamento</p>
+                    </div>
+                    <div class="card-body">
+                        <h3>Objetivo do Laboratório</h3>
+                        <p>Este laboratório teve como objetivo implementar:</p>
+                        <ul>
+                            <li>Modelo Entidade-Relacionamento (ER) completo</li>
+                            <li>Definição e implementação da estratégia de acesso ao banco de dados</li>
+                            <li>CRUDs de aluno e empresa parceira</li>
+                            <li>Frontend para comunicação com o backend via API REST</li>
+                        </ul>
+
+                        <h3>Estratégia de Acesso ao Banco de Dados</h3>
+                        <p>O sistema utiliza as seguintes estratégias:</p>
+                        <ul>
+                            <li><strong>ORM (Object-Relational Mapping):</strong> Hibernate/JPA para mapeamento objeto-relacional</li>
+                            <li><strong>Padrão Repository:</strong> Spring Data JPA para abstrair o acesso aos dados</li>
+                            <li><strong>DTO (Data Transfer Object):</strong> Para transferência de dados entre camadas</li>
+                            <li><strong>Service Layer:</strong> Para implementar regras de negócio</li>
+                        </ul>
+
+                        <h3>Modelo Entidade-Relacionamento</h3>
+                        <p>O banco de dados foi modelado com as seguintes entidades principais:</p>
+                        
+                        <h4>Entidades Implementadas:</h4>
+                        <ul>
+                            <li><strong>Usuario:</strong> Tabela base para autenticação (polimórfica)</li>
+                            <li><strong>Aluno:</strong> Especialização de usuário para estudantes</li>
+                            <li><strong>Professor:</strong> Especialização de usuário para docentes</li>
+                            <li><strong>Empresa:</strong> Especialização de usuário para empresas parceiras</li>
+                            <li><strong>Instituicao:</strong> Universidades e faculdades participantes</li>
+                            <li><strong>Vantagem:</strong> Produtos/serviços oferecidos pelas empresas</li>
+                            <li><strong>Transacao:</strong> Histórico de movimentação de moedas</li>
+                        </ul>
+                    </div>
+                </div>
+            </main>
         </div>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
-    <main class="container">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Lab03S02 - Modelo ER e CRUDs</h2>
-                <p class="card-subtitle">Implementação do banco de dados e interfaces de gerenciamento</p>
-            </div>
-            
-            <div class="card-content">
-                <h3>Objetivo do Laboratório</h3>
-                <p>Este laboratório teve como objetivo implementar:</p>
-                <ul>
-                    <li>Modelo Entidade-Relacionamento (ER) completo</li>
-                    <li>Definição e implementação da estratégia de acesso ao banco de dados</li>
-                    <li>CRUDs de aluno e empresa parceira</li>
-                    <li>Frontend para comunicação com o backend via API REST</li>
-                </ul>
-
-                <h3>Estratégia de Acesso ao Banco de Dados</h3>
-                <p>O sistema utiliza as seguintes estratégias:</p>
-                <ul>
-                    <li><strong>ORM (Object-Relational Mapping):</strong> Hibernate/JPA para mapeamento objeto-relacional</li>
-                    <li><strong>Padrão Repository:</strong> Spring Data JPA para abstrair o acesso aos dados</li>
-                    <li><strong>DTO (Data Transfer Object):</strong> Para transferência de dados entre camadas</li>
-                    <li><strong>Service Layer:</strong> Para implementar regras de negócio</li>
-                </ul>
-
-                <h3>Modelo Entidade-Relacionamento</h3>
-                <p>O banco de dados foi modelado com as seguintes entidades principais:</p>
-                
-                <h4>Entidades Implementadas:</h4>
-                <ul>
-                    <li><strong>Usuario:</strong> Tabela base para autenticação (polimórfica)</li>
-                    <li><strong>Aluno:</strong> Especialização de usuário para estudantes</li>
-                    <li><strong>Professor:</strong> Especialização de usuário para docentes</li>
-                    <li><strong>Empresa:</strong> Especialização de usuário para empresas parceiras</li>
-                    <li><strong>Instituicao:</strong> Universidades e faculdades participantes</li>
-                    <li><strong>Vantagem:</strong> Produtos/serviços oferecidos pelas empresas</li>
-                    <li><strong>Transacao:</strong> Histórico de movimentação de moedas</li>
-                </ul>
-
-                <h4>Relacionamentos:</h4>
-                <ul>
-                    <li>Usuario 1:1 Aluno/Professor/Empresa (herança)</li>
-                    <li>Instituicao 1:N Aluno</li>
-                    <li>Instituicao 1:N Professor</li>
-                    <li>Empresa 1:N Vantagem</li>
-                    <li>Usuario N:N Transacao (como remetente ou destinatário)</li>
-                    <li>Vantagem 1:N Transacao (para resgates)</li>
-                </ul>
-
-                <h3>Funcionalidades dos CRUDs</h3>
-                
-                <h4>CRUD de Alunos:</h4>
-                <ul>
-                    <li>Cadastro com validação de dados (CPF, email únicos)</li>
-                    <li>Listagem com filtros por instituição e busca por nome</li>
-                    <li>Edição de dados pessoais e acadêmicos</li>
-                    <li>Exclusão com confirmação</li>
-                    <li>Visualização do saldo de moedas</li>
-                </ul>
-
-                <h4>CRUD de Empresas:</h4>
-                <ul>
-                    <li>Cadastro com validação de dados (CNPJ, email únicos)</li>
-                    <li>Listagem com busca por nome ou nome fantasia</li>
-                    <li>Edição de dados corporativos</li>
-                    <li>Exclusão com confirmação</li>
-                    <li>Contagem de vantagens cadastradas</li>
-                </ul>
-
-                <h3>Arquitetura Técnica</h3>
-                
-                <h4>Backend (Spring Boot):</h4>
-                <ul>
-                    <li><strong>Controller Layer:</strong> Endpoints REST com validação</li>
-                    <li><strong>Service Layer:</strong> Lógica de negócio e transações</li>
-                    <li><strong>Repository Layer:</strong> Acesso aos dados com Spring Data JPA</li>
-                    <li><strong>Model Layer:</strong> Entidades JPA com anotações</li>
-                    <li><strong>DTO Layer:</strong> Objetos de transferência de dados</li>
-                </ul>
-
-                <h4>Frontend (HTML/CSS/JavaScript):</h4>
-                <ul>
-                    <li><strong>HTML5:</strong> Estrutura semântica e responsiva</li>
-                    <li><strong>CSS3:</strong> Estilos modernos com Flexbox e Grid</li>
-                    <li><strong>JavaScript ES6+:</strong> Classes, fetch API, async/await</li>
-                    <li><strong>Validação:</strong> Cliente e servidor side</li>
-                    <li><strong>UX/UI:</strong> Interface intuitiva com feedback visual</li>
-                </ul>
-
-                <h3>Validações Implementadas</h3>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>
                 <ul>
                     <li>Formato de CPF (XXX.XXX.XXX-XX)</li>
                     <li>Formato de CNPJ (XX.XXX.XXX/XXXX-XX)</li>

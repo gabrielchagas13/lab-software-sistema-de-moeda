@@ -3,77 +3,135 @@ class AlunosManager {
     constructor() {
         this.currentEditId = null;
         this.alunos = [];
-        
+        this.instituicoes = [];
+        this.filtroAtivo = 'all';
         this.init();
     }
 
     async init() {
-        await this.loadAlunos();
+        await Promise.all([
+            this.loadAlunos(),
+            this.loadInstituicoes()
+        ]);
         this.setupEventListeners();
+        this.populateFilters();
     }
 
-    async loadAlunos(filters = {}) {
+    async loadAlunos() {
         try {
             const tableBody = document.getElementById('alunosTableBody');
             appUtils.showLoading(tableBody);
-
-            let url = '/alunos';
             
-            // Apply filters
-            if (filters.nome) {
-                url = `/alunos/nome?nome=${encodeURIComponent(filters.nome)}`;
-            } else if (filters.instituicao) {
-                // Filter by institution name in frontend since we're using text field
-                this.alunos = await appUtils.httpClient.get('/alunos');
-                this.alunos = this.alunos.filter(aluno => 
-                    aluno.instituicao && aluno.instituicao.toLowerCase().includes(filters.instituicao.toLowerCase())
-                );
-                this.renderAlunosTable();
-                return;
-            }
-
-            this.alunos = await appUtils.httpClient.get(url);
-            this.renderAlunosTable();
+            this.alunos = await appUtils.httpClient.get('/alunos');
+            this.renderAlunos();
         } catch (error) {
             document.getElementById('alunosTableBody').innerHTML = 
-                '<tr><td colspan="8" class="text-center">Erro ao carregar alunos</td></tr>';
+                '<tr><td colspan="7" class="text-center">Erro ao carregar alunos</td></tr>';
             appUtils.showError('Erro ao carregar alunos: ' + error.message);
         }
     }
 
-    renderAlunosTable() {
+    async loadInstituicoes() {
+        try {
+            this.instituicoes = await appUtils.httpClient.get('/instituicoes');
+            this.populateInstituicaoSelect();
+        } catch (error) {
+            appUtils.showError('Erro ao carregar instituições: ' + error.message);
+            this.instituicoes = [];
+        }
+    }
+
+    populateInstituicaoSelect() {
+        const select = document.getElementById('instituicaoId');
+        if (!select) return;
+        
+        // Clear existing options (keep the first placeholder option)
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+        
+        // Add institution options
+        this.instituicoes.forEach(instituicao => {
+            const option = document.createElement('option');
+            option.value = instituicao.id;
+            option.textContent = instituicao.nome;
+            select.appendChild(option);
+        });
+    }
+
+    renderAlunos() {
+        let alunosFiltrados = this.getFilteredAlunos();
         const tableBody = document.getElementById('alunosTableBody');
         
-        if (this.alunos.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhum aluno encontrado</td></tr>';
+        if (alunosFiltrados.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum aluno encontrado</td></tr>';
             return;
         }
 
-        tableBody.innerHTML = this.alunos.map(aluno => `
+        tableBody.innerHTML = alunosFiltrados.map(aluno => `
             <tr>
                 <td>${aluno.id}</td>
                 <td>${aluno.nome}</td>
                 <td>${aluno.email}</td>
-                <td>${appUtils.formatCPF(aluno.cpf)}</td>
-                <td>${aluno.instituicao || ''}</td>
                 <td>${aluno.curso}</td>
-                <td>R$ ${aluno.saldoMoedas.toFixed(2)}</td>
+                <td>${aluno.instituicao ? aluno.instituicao.nome : ''}</td>
+                <td><span class="badge bg-primary">${aluno.saldoMoedas || 0}</span></td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="alunosManager.editAluno(${aluno.id})">
-                        Editar
+                    <button class="btn btn-sm btn-outline-primary" onclick="alunosManager.editAluno(${aluno.id})">
+                        <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="alunosManager.deleteAluno(${aluno.id})">
-                        Excluir
+                    <button class="btn btn-sm btn-outline-danger" onclick="alunosManager.deleteAluno(${aluno.id})">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </td>
             </tr>
         `).join('');
     }
 
+    getFilteredAlunos() {
+        let filtered = [...this.alunos];
+        
+        // Apply search filter
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        if (searchTerm) {
+            filtered = filtered.filter(aluno => 
+                aluno.nome.toLowerCase().includes(searchTerm) || 
+                aluno.email.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        // Apply course filter
+        const cursoFilter = document.getElementById('cursoFilter').value;
+        if (cursoFilter) {
+            filtered = filtered.filter(aluno => aluno.curso === cursoFilter);
+        }
+
+        // Apply status filters
+        switch (this.filtroAtivo) {
+            case 'active':
+                // Assume active students (could be based on some field)
+                break;
+            case 'rich':
+                filtered = filtered.filter(aluno => (aluno.saldoMoedas || 0) > 0);
+                break;
+        }
+
+        return filtered;
+    }
+
+    populateFilters() {
+        // Populate course filter
+        const cursos = [...new Set(this.alunos.map(a => a.curso))].sort();
+        const cursoFilter = document.getElementById('cursoFilter');
+        cursoFilter.innerHTML = '<option value="">Todos os cursos</option>' +
+            cursos.map(curso => `<option value="${curso}">${curso}</option>`).join('');
+    }
+
     setupEventListeners() {
-        // CPF mask
-        const cpfInput = document.getElementById('cpf');
-        cpfInput.addEventListener('input', () => appUtils.maskCPF(cpfInput));
+        // New Aluno button
+        document.getElementById('novoAlunoBtn').addEventListener('click', () => {
+            this.showAlunoModal();
+        });
 
         // Form submission
         document.getElementById('alunoForm').addEventListener('submit', (e) => {
@@ -81,30 +139,62 @@ class AlunosManager {
             this.handleFormSubmit();
         });
 
-        // Cancel button
-        document.getElementById('cancelBtn').addEventListener('click', () => {
+        // Search and filter inputs
+        document.getElementById('searchInput').addEventListener('input', () => {
+            this.renderAlunos();
+        });
+
+        document.getElementById('cursoFilter').addEventListener('change', () => {
+            this.renderAlunos();
+        });
+
+        // Filter buttons
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.filtroAtivo = e.target.dataset.filter;
+                this.renderAlunos();
+            });
+        });
+
+        // CPF mask
+        const cpfInput = document.getElementById('cpf');
+        if (cpfInput) {
+            cpfInput.addEventListener('input', () => appUtils.maskCPF(cpfInput));
+        }
+    }
+
+    showAlunoModal(aluno = null) {
+        this.currentEditId = aluno ? aluno.id : null;
+        const modal = new bootstrap.Modal(document.getElementById('alunoModal'));
+        
+        // Update modal title and button
+        const modalTitle = document.getElementById('modalTitle');
+        const saveBtn = document.getElementById('salvarAlunoBtn');
+        
+        if (aluno) {
+            modalTitle.textContent = 'Editar Aluno';
+            saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Atualizar Aluno';
+            this.fillForm(aluno);
+        } else {
+            modalTitle.textContent = 'Novo Aluno';
+            saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Salvar Aluno';
             this.resetForm();
-        });
+        }
+        
+        modal.show();
+    }
 
-        // Search and filter buttons
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            this.handleSearch();
-        });
-
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            this.clearFilters();
-        });
-
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            this.loadAlunos();
-        });
-
-        // Enter key on search inputs
-        document.getElementById('searchNome').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleSearch();
-            }
-        });
+    fillForm(aluno) {
+        document.getElementById('nome').value = aluno.nome || '';
+        document.getElementById('email').value = aluno.email || '';
+        document.getElementById('cpf').value = aluno.cpf || '';
+        document.getElementById('rg').value = aluno.rg || '';
+        document.getElementById('senha').value = '';
+        document.getElementById('instituicaoId').value = aluno.instituicao ? aluno.instituicao.id : '';
+        document.getElementById('curso').value = aluno.curso || '';
+        document.getElementById('endereco').value = aluno.endereco || '';
     }
 
     async handleFormSubmit() {
@@ -115,10 +205,10 @@ class AlunosManager {
         const formData = this.getFormData();
         
         try {
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Salvando...';
-            submitBtn.disabled = true;
+            const saveBtn = document.getElementById('salvarAlunoBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Salvando...';
+            saveBtn.disabled = true;
 
             if (this.currentEditId) {
                 await appUtils.httpClient.put(`/alunos/${this.currentEditId}`, formData);
@@ -128,50 +218,45 @@ class AlunosManager {
                 appUtils.showSuccess('Aluno cadastrado com sucesso!');
             }
 
-            this.resetForm();
+            bootstrap.Modal.getInstance(document.getElementById('alunoModal')).hide();
             await this.loadAlunos();
         } catch (error) {
             appUtils.showError('Erro ao salvar aluno: ' + error.message);
         } finally {
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.textContent = this.currentEditId ? 'Atualizar Aluno' : 'Cadastrar Aluno';
-            submitBtn.disabled = false;
+            const saveBtn = document.getElementById('salvarAlunoBtn');
+            saveBtn.innerHTML = this.currentEditId ? '<i class="fas fa-save me-2"></i>Atualizar Aluno' : '<i class="fas fa-save me-2"></i>Salvar Aluno';
+            saveBtn.disabled = false;
         }
     }
 
     validateForm() {
-        this.clearErrors();
         let isValid = true;
-
-        const formData = this.getFormData();
-
-        // Required field validation
-        const requiredFields = ['nome', 'email', 'cpf', 'rg', 'endereco', 'curso', 'instituicao'];
+        const requiredFields = ['nome', 'email', 'cpf', 'rg', 'endereco', 'curso', 'instituicaoId'];
         
+        // Clear previous validation states
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.classList.remove('is-invalid');
+        });
+
         requiredFields.forEach(field => {
-            if (!formData[field] || formData[field].trim() === '') {
-                this.showFieldError(field, 'Este campo é obrigatório');
+            const input = document.getElementById(field);
+            if (!input.value.trim()) {
+                input.classList.add('is-invalid');
                 isValid = false;
             }
         });
 
-        // Password validation (only for new users or when password is provided)
-        if (!this.currentEditId || formData.senha) {
-            if (!formData.senha || formData.senha.length < 6) {
-                this.showFieldError('senha', 'Senha deve ter no mínimo 6 caracteres');
-                isValid = false;
-            }
-        }
-
-        // Email validation
-        if (formData.email && !appUtils.validateEmail(formData.email)) {
-            this.showFieldError('email', 'Email deve ter formato válido');
+        // Password validation (only for new users)
+        const senhaInput = document.getElementById('senha');
+        if (!this.currentEditId && (!senhaInput.value || senhaInput.value.length < 6)) {
+            senhaInput.classList.add('is-invalid');
             isValid = false;
         }
 
-        // CPF validation
-        if (formData.cpf && !appUtils.validateCPF(formData.cpf)) {
-            this.showFieldError('cpf', 'CPF deve estar no formato XXX.XXX.XXX-XX');
+        // Email validation
+        const emailInput = document.getElementById('email');
+        if (emailInput.value && !appUtils.validateEmail(emailInput.value)) {
+            emailInput.classList.add('is-invalid');
             isValid = false;
         }
 
@@ -179,69 +264,26 @@ class AlunosManager {
     }
 
     getFormData() {
-        const form = document.getElementById('alunoForm');
-        const formData = new FormData(form);
-        const data = {};
-        
-        for (let [key, value] of formData.entries()) {
-            data[key] = value;
-        }
-        
-        // Remove instituicaoId conversion since we're now using instituicao as text
-        
-        return data;
-    }
-
-    clearErrors() {
-        const errorElements = document.querySelectorAll('.form-error');
-        errorElements.forEach(el => el.textContent = '');
-        
-        const inputElements = document.querySelectorAll('.form-input');
-        inputElements.forEach(el => el.classList.remove('error'));
-    }
-
-    showFieldError(fieldName, message) {
-        const errorElement = document.getElementById(`${fieldName}Error`);
-        const inputElement = document.getElementById(fieldName);
-        
-        if (errorElement) {
-            errorElement.textContent = message;
-        }
-        
-        if (inputElement) {
-            inputElement.classList.add('error');
-        }
+        const instituicaoId = document.getElementById('instituicaoId').value;
+        return {
+            nome: document.getElementById('nome').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            cpf: document.getElementById('cpf').value.trim(),
+            rg: document.getElementById('rg').value.trim(),
+            senha: document.getElementById('senha').value,
+            instituicaoId: instituicaoId ? parseInt(instituicaoId) : null,
+            curso: document.getElementById('curso').value.trim(),
+            endereco: document.getElementById('endereco').value.trim()
+        };
     }
 
     async editAluno(id) {
         try {
             const aluno = await appUtils.httpClient.get(`/alunos/${id}`);
-            this.fillFormForEdit(aluno);
+            this.showAlunoModal(aluno);
         } catch (error) {
             appUtils.showError('Erro ao carregar dados do aluno: ' + error.message);
         }
-    }
-
-    fillFormForEdit(aluno) {
-        this.currentEditId = aluno.id;
-        
-        // Fill form fields
-        document.getElementById('alunoId').value = aluno.id;
-        document.getElementById('nome').value = aluno.nome;
-        document.getElementById('email').value = aluno.email;
-        document.getElementById('cpf').value = aluno.cpf;
-        document.getElementById('rg').value = aluno.rg;
-        document.getElementById('endereco').value = aluno.endereco;
-        document.getElementById('curso').value = aluno.curso;
-        document.getElementById('instituicao').value = aluno.instituicao || '';
-        document.getElementById('senha').value = ''; // Don't fill password
-        
-        // Update form UI
-        document.getElementById('formTitle').textContent = 'Editar Aluno';
-        document.getElementById('submitBtn').textContent = 'Atualizar Aluno';
-        
-        // Scroll to form
-        document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
     }
 
     async deleteAluno(id) {
@@ -261,31 +303,46 @@ class AlunosManager {
 
     resetForm() {
         this.currentEditId = null;
-        
         document.getElementById('alunoForm').reset();
-        document.getElementById('alunoId').value = '';
-        
-        document.getElementById('formTitle').textContent = 'Cadastrar Novo Aluno';
-        document.getElementById('submitBtn').textContent = 'Cadastrar Aluno';
-        
-        this.clearErrors();
     }
 
-    handleSearch() {
-        const nome = document.getElementById('searchNome').value.trim();
-        const instituicao = document.getElementById('filterInstituicao').value.trim();
-        
-        const filters = {};
-        if (nome) filters.nome = nome;
-        if (instituicao) filters.instituicao = instituicao;
-        
-        this.loadAlunos(filters);
+    exportAlunos() {
+        if (this.alunos.length === 0) {
+            appUtils.showWarning('Nenhum aluno para exportar');
+            return;
+        }
+
+        const csv = this.convertToCSV(this.alunos);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `alunos_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
-    clearFilters() {
-        document.getElementById('searchNome').value = '';
-        document.getElementById('filterInstituicao').value = '';
-        this.loadAlunos();
+    convertToCSV(data) {
+        if (data.length === 0) return '';
+
+        const headers = ['ID', 'Nome', 'Email', 'CPF', 'Curso', 'Instituição', 'Moedas'];
+        const rows = data.map(aluno => [
+            aluno.id,
+            aluno.nome,
+            aluno.email,
+            aluno.cpf,
+            aluno.curso,
+            aluno.instituicao ? aluno.instituicao.nome : '',
+            aluno.saldoMoedas || 0
+        ]);
+
+        const csvContent = [headers, ...rows]
+            .map(row => row.map(field => `"${field}"`).join(','))
+            .join('\n');
+
+        return csvContent;
     }
 }
 

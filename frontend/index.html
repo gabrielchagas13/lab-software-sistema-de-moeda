@@ -4,98 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Moeda Estudantil</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <h1>Sistema de Moeda Estudantil</h1>
-        <p>Estimulando o reconhecimento do mérito através de uma moeda virtual</p>
-    </header>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Sistema de Moedas</span>
+                    </h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="index.html">
+                                <i class="fas fa-home"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="pages/alunos.html">
+                                <i class="fas fa-user-graduate"></i>
+                                Alunos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="pages/professores.html">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                Professores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="pages/empresas.html">
+                                <i class="fas fa-building"></i>
+                                Empresas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="pages/vantagens.html">
+                                <i class="fas fa-gift"></i>
+                                Vantagens
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="pages/transacoes.html">
+                                <i class="fas fa-exchange-alt"></i>
+                                Transações
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="pages/sobre.html">
+                                <i class="fas fa-info-circle"></i>
+                                Sobre
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
 
-    <!-- Navigation -->
-    <nav class="nav">
-        <div class="nav-container">
-            <a href="index.html" class="nav-link active">Início</a>
-            <a href="pages/alunos.html" class="nav-link">Alunos</a>
-            <a href="pages/empresas.html" class="nav-link">Empresas</a>
-            <a href="pages/sobre.html" class="nav-link">Sobre</a>
-        </div>
-    </nav>
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Bem-vindo ao Sistema de Moeda Estudantil</h1>
+                </div>
 
-    <!-- Main Content -->
-    <main class="container">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Bem-vindo ao Sistema de Moeda Estudantil</h2>
-                <p class="card-subtitle">Lab03S02 - Implementação do modelo ER e CRUDs</p>
-            </div>
-            
-            <div class="card-content">
-                <h3>Sobre o Sistema</h3>
-                <p>Este sistema foi desenvolvido para estimular o reconhecimento do mérito estudantil através de uma moeda virtual. Professores podem distribuir moedas aos alunos como forma de reconhecimento, e os alunos podem trocar essas moedas por vantagens oferecidas por empresas parceiras.</p>
-                
-                <h3>Funcionalidades Implementadas</h3>
-                <ul>
-                    <li><strong>Modelo ER Completo:</strong> Estrutura do banco de dados com todas as entidades necessárias</li>
-                    <li><strong>CRUD de Alunos:</strong> Cadastro, listagem, edição e exclusão de alunos</li>
-                    <li><strong>CRUD de Empresas:</strong> Cadastro, listagem, edição e exclusão de empresas parceiras</li>
-                    <li><strong>Arquitetura MVC:</strong> Backend em Spring Boot com padrão Repository</li>
-                    <li><strong>API REST:</strong> Endpoints para comunicação frontend-backend</li>
-                    <li><strong>Interface Responsiva:</strong> Frontend em HTML/CSS/JavaScript</li>
-                </ul>
-                
-                <h3>Tecnologias Utilizadas</h3>
-                <div class="form-row">
-                    <div>
-                        <h4>Backend</h4>
-                        <ul>
-                            <li>Java 17</li>
-                            <li>Spring Boot 3.1.5</li>
-                            <li>Spring Data JPA</li>
-                            <li>MySQL / H2 Database</li>
-                            <li>Lombok</li>
-                            <li>Bean Validation</li>
-                        </ul>
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h2 class="card-title">Lab03S02 - Implementação do modelo ER e CRUDs</h2>
+                        <p class="card-subtitle">Visão geral do sistema</p>
                     </div>
-                    <div>
-                        <h4>Frontend</h4>
+                    <div class="card-body">
+                        <h3>Sobre o Sistema</h3>
+                        <p>Este sistema foi desenvolvido para estimular o reconhecimento do mérito estudantil através de uma moeda virtual. Professores podem distribuir moedas aos alunos como forma de reconhecimento, e os alunos podem trocar essas moedas por vantagens oferecidas por empresas parceiras.</p>
+
+                        <h3>Funcionalidades Implementadas</h3>
                         <ul>
-                            <li>HTML5</li>
-                            <li>CSS3 (Grid/Flexbox)</li>
-                            <li>JavaScript ES6+</li>
-                            <li>Fetch API</li>
-                            <li>Design Responsivo</li>
+                            <li>Modelo ER completo</li>
+                            <li>CRUDs de Alunos, Professores e Empresas</li>
+                            <li>Sistema de Vantagens e Transações</li>
+                            <li>API REST com Spring Boot</li>
+                            <li>Frontend responsivo em HTML/CSS/JS</li>
                         </ul>
+
+                        <div class="btn-group mt-3">
+                            <a href="pages/alunos.html" class="btn btn-primary">Gerenciar Alunos</a>
+                            <a href="pages/professores.html" class="btn btn-info">Gerenciar Professores</a>
+                            <a href="pages/empresas.html" class="btn btn-secondary">Gerenciar Empresas</a>
+                            <a href="pages/vantagens.html" class="btn btn-success">Gerenciar Vantagens</a>
+                            <a href="pages/transacoes.html" class="btn btn-warning">Sistema de Transações</a>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="btn-group">
-                    <a href="pages/alunos.html" class="btn btn-primary">Gerenciar Alunos</a>
-                    <a href="pages/empresas.html" class="btn btn-secondary">Gerenciar Empresas</a>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Estrutura do Banco de Dados</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Principais entidades: Usuario, Aluno, Professor, Empresa, Instituicao, Vantagem, Transacao.</p>
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
+    </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Estrutura do Banco de Dados</h3>
-            </div>
-            <div class="card-content">
-                <p>O sistema implementa as seguintes entidades principais:</p>
-                <ul>
-                    <li><strong>Usuario:</strong> Tabela base para autenticação (alunos, professores, empresas)</li>
-                    <li><strong>Aluno:</strong> Informações específicas dos estudantes</li>
-                    <li><strong>Professor:</strong> Informações dos docentes que distribuem moedas</li>
-                    <li><strong>Empresa:</strong> Empresas parceiras que oferecem vantagens</li>
-                    <li><strong>Instituicao:</strong> Universidades e faculdades participantes</li>
-                    <li><strong>Vantagem:</strong> Produtos/serviços oferecidos pelas empresas</li>
-                    <li><strong>Transacao:</strong> Histórico de movimentação de moedas</li>
-                </ul>
-            </div>
-        </div>
-    </main>
-
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

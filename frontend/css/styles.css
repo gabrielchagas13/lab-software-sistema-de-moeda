@@ -259,6 +259,12 @@ body {
     color: #055160;
 }
 
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffecb5;
+    color: #664d03;
+}
+
 /* Loading */
 .loading {
     text-align: center;

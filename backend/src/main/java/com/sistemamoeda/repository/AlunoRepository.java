@@ -1,6 +1,7 @@
 package com.sistemamoeda.repository;
 
 import com.sistemamoeda.model.Aluno;
+import com.sistemamoeda.model.Instituicao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,11 +27,12 @@ public interface AlunoRepository extends JpaRepository<Aluno, Long> {
     // Verificar se CPF já existe
     boolean existsByCpf(String cpf);
     
-    // Buscar por instituição (agora String)
-    List<Aluno> findByInstituicao(String instituicao);
+    // Buscar por instituição
+    List<Aluno> findByInstituicao(Instituicao instituicao);
     
-    // Buscar por instituição contendo texto (case insensitive)
-    List<Aluno> findByInstituicaoContainingIgnoreCase(String instituicao);
+    // Buscar por nome da instituição contendo texto (case insensitive)
+    @Query("SELECT a FROM Aluno a WHERE LOWER(a.instituicao.nome) LIKE LOWER(CONCAT('%', :nomeInstituicao, '%'))")
+    List<Aluno> findByInstituicaoNomeContainingIgnoreCase(@Param("nomeInstituicao") String nomeInstituicao);
     
     // Buscar por curso
     List<Aluno> findByCursoContainingIgnoreCase(String curso);
@@ -45,12 +47,13 @@ public interface AlunoRepository extends JpaRepository<Aluno, Long> {
     // Buscar alunos com saldo entre valores
     List<Aluno> findBySaldoMoedasBetween(BigDecimal minimo, BigDecimal maximo);
     
-    // Buscar alunos por instituição e curso
-    List<Aluno> findByInstituicaoContainingIgnoreCaseAndCursoContainingIgnoreCase(String instituicao, String curso);
+    // Buscar alunos por nome da instituição e curso
+    @Query("SELECT a FROM Aluno a WHERE LOWER(a.instituicao.nome) LIKE LOWER(CONCAT('%', :nomeInstituicao, '%')) AND LOWER(a.curso) LIKE LOWER(CONCAT('%', :curso, '%'))")
+    List<Aluno> findByInstituicaoNomeAndCurso(@Param("nomeInstituicao") String nomeInstituicao, @Param("curso") String curso);
     
     // Estatísticas - total de alunos por instituição
-    @Query("SELECT COUNT(a) FROM Aluno a WHERE LOWER(a.instituicao) = LOWER(:instituicao)")
-    Long countByInstituicao(@Param("instituicao") String instituicao);
+    @Query("SELECT COUNT(a) FROM Aluno a WHERE a.instituicao = :instituicao")
+    Long countByInstituicao(@Param("instituicao") Instituicao instituicao);
     
     // Estatísticas - soma total de moedas de todos os alunos
     @Query("SELECT COALESCE(SUM(a.saldoMoedas), 0) FROM Aluno a")

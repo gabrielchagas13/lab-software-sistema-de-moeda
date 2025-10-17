@@ -27,10 +27,9 @@ public class Professor {
     @JoinColumn(name = "usuario_id", nullable = false, unique = true)
     private Usuario usuario;
     
-    @NotBlank(message = "Instituição é obrigatória")
-    @Size(max = 100, message = "Instituição deve ter no máximo 100 caracteres")
-    @Column(nullable = false, length = 100)
-    private String instituicao;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instituicao_id", nullable = false)
+    private Instituicao instituicao;
     
     @NotBlank(message = "CPF é obrigatório")
     @Pattern(regexp = "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}", message = "CPF deve estar no formato XXX.XXX.XXX-XX")
@@ -50,7 +49,7 @@ public class Professor {
     private LocalDateTime dataCadastro;
     
     // Construtor para criação
-    public Professor(Usuario usuario, String instituicao, String cpf, String departamento) {
+    public Professor(Usuario usuario, Instituicao instituicao, String cpf, String departamento) {
         this.usuario = usuario;
         this.instituicao = instituicao;
         this.cpf = cpf;

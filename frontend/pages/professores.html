@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professores - Sistema de Moeda Estudantil</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Sistema de Moedas</span>
+                    </h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="../index.html">
+                                <i class="fas fa-home"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="alunos.html">
+                                <i class="fas fa-user-graduate"></i>
+                                Alunos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="professores.html">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                Professores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="empresas.html">
+                                <i class="fas fa-building"></i>
+                                Empresas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="vantagens.html">
+                                <i class="fas fa-gift"></i>
+                                Vantagens
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="transacoes.html">
+                                <i class="fas fa-exchange-alt"></i>
+                                Transações
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="sobre.html">
+                                <i class="fas fa-info-circle"></i>
+                                Sobre
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>
+                        Gerenciamento de Professores
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-success" id="newProfessorBtn">
+                                <i class="fas fa-plus me-2"></i>Novo Professor
+                            </button>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="professoresManager.exportProfessores()">
+                                <i class="fas fa-download me-2"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Buscar professores...">
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                                Todos
+                            </button>
+                            <button type="button" class="btn btn-outline-success" data-filter="active">
+                                Ativos
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" data-filter="inactive">
+                                Inativos
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" data-filter="saldo-baixo">
+                                Saldo Baixo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professores Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Lista de Professores</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Email</th>
+                                        <th>CPF</th>
+                                        <th>Instituição</th>
+                                        <th>Departamento</th>
+                                        <th>Saldo Moedas</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="professoresTableBody">
+                                    <!-- Professores will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Professor Form Modal -->
+    <div class="modal fade" id="professorModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Novo Professor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="professorForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nome" class="form-label">Nome *</label>
+                                    <input type="text" class="form-control" id="nome" required maxlength="100">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email *</label>
+                                    <input type="email" class="form-control" id="email" required maxlength="100">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="senha" class="form-label">Senha *</label>
+                                    <input type="password" class="form-control" id="senha" minlength="6">
+                                    <div class="form-text">
+                                        <small>Deixe em branco para manter a senha atual (ao editar)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cpf" class="form-label">CPF *</label>
+                                    <input type="text" class="form-control" id="cpf" required 
+                                           pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" 
+                                           placeholder="000.000.000-00">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="instituicaoId" class="form-label">Instituição *</label>
+                                    <select class="form-select" id="instituicaoId" required>
+                                        <option value="">Selecione uma instituição</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="departamento" class="form-label">Departamento *</label>
+                                    <input type="text" class="form-control" id="departamento" required maxlength="100">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" id="clearFormBtn">Limpar</button>
+                    <button type="submit" class="btn btn-primary" id="saveProfessorBtn" form="professorForm">
+                        Cadastrar Professor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Professor Details Modal -->
+    <div class="modal fade" id="professorDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalhes do Professor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="professorDetailsContent">
+                    <!-- Professor details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Semester Coins Modal -->
+    <div class="modal fade" id="addCoinsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Moedas Semestrais</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja adicionar 1000 moedas semestrais para o professor <strong id="professorNameForCoins"></strong>?</p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Esta ação adicionará 1000 moedas ao saldo atual do professor.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="confirmAddCoinsBtn">
+                        <i class="fas fa-coins me-2"></i>Adicionar Moedas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- App Utils -->
+    <script src="../js/main.js"></script>
+    
+    <!-- Professores JS -->
+    <script src="../js/professores.js"></script>
+</body>
+</html>

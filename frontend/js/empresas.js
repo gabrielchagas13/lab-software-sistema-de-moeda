@@ -67,48 +67,73 @@ class EmpresasManager {
     setupEventListeners() {
         // CNPJ mask
         const cnpjInput = document.getElementById('cnpj');
-        cnpjInput.addEventListener('input', () => appUtils.maskCNPJ(cnpjInput));
+        if (cnpjInput) {
+            cnpjInput.addEventListener('input', () => appUtils.maskCNPJ(cnpjInput));
+        }
 
         // Phone mask
         const telefoneInput = document.getElementById('telefone');
-        telefoneInput.addEventListener('input', () => this.maskTelefone(telefoneInput));
+        if (telefoneInput) {
+            telefoneInput.addEventListener('input', () => this.maskTelefone(telefoneInput));
+        }
 
         // Form submission
-        document.getElementById('empresaForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleFormSubmit();
-        });
+        const empresaForm = document.getElementById('empresaForm');
+        if (empresaForm) {
+            empresaForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleFormSubmit();
+            });
+        }
 
         // Cancel button
-        document.getElementById('cancelBtn').addEventListener('click', () => {
-            this.resetForm();
-        });
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.resetForm();
+            });
+        }
 
         // Search and filter buttons
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            this.handleSearch();
-        });
+        const searchBtn = document.getElementById('searchBtn');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                this.handleSearch();
+            });
+        }
 
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            this.clearFilters();
-        });
+        const clearBtn = document.getElementById('clearBtn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                this.clearFilters();
+            });
+        }
 
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            this.loadEmpresas();
-        });
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadEmpresas();
+            });
+        }
 
         // Enter key on search inputs
-        document.getElementById('searchNome').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleSearch();
-            }
-        });
+        const searchNome = document.getElementById('searchNome');
+        if (searchNome) {
+            searchNome.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleSearch();
+                }
+            });
+        }
 
-        document.getElementById('searchNomeFantasia').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleSearch();
-            }
-        });
+        const searchNomeFantasia = document.getElementById('searchNomeFantasia');
+        if (searchNomeFantasia) {
+            searchNomeFantasia.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleSearch();
+                }
+            });
+        }
     }
 
     maskTelefone(input) {

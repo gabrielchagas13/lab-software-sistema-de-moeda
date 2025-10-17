@@ -16,7 +16,7 @@ public interface InstituicaoRepository extends JpaRepository<Instituicao, Long> 
     Optional<Instituicao> findByNome(String nome);
     
     // Buscar instituições ativas
-    List<Instituicao> findByAtivoTrue();
+    List<Instituicao> findByAtivo(Boolean ativo);
     
     // Buscar por nome (busca parcial, case insensitive)
     @Query("SELECT i FROM Instituicao i WHERE LOWER(i.nome) LIKE LOWER(CONCAT('%', :nome, '%'))")
@@ -30,10 +30,10 @@ public interface InstituicaoRepository extends JpaRepository<Instituicao, Long> 
     boolean existsByNome(String nome);
     
     // Contar alunos por instituição
-    @Query("SELECT COUNT(a) FROM Aluno a WHERE LOWER(a.instituicao) = LOWER(:instituicaoNome)")
-    Long countAlunosByInstituicaoNome(@Param("instituicaoNome") String instituicaoNome);
+    @Query("SELECT COUNT(a) FROM Aluno a WHERE a.instituicao.id = :instituicaoId")
+    Long countAlunosByInstituicaoId(@Param("instituicaoId") Long instituicaoId);
     
     // Contar professores por instituição
-    @Query("SELECT COUNT(p) FROM Professor p WHERE LOWER(p.instituicao) = LOWER(:instituicaoNome)")
-    Long countProfessoresByInstituicaoNome(@Param("instituicaoNome") String instituicaoNome);
+    @Query("SELECT COUNT(p) FROM Professor p WHERE p.instituicao.id = :instituicaoId")
+    Long countProfessoresByInstituicaoId(@Param("instituicaoId") Long instituicaoId);
 }
