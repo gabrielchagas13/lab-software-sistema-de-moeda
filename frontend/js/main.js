@@ -68,13 +68,37 @@ const validateCNPJ = (cnpj) => {
 
 // HTTP client
 const httpClient = {
+    async _parseResponse(response) {
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.toLowerCase().includes('application/json')) {
+            return await response.json();
+        }
+        // Fallback to text for validation/errors that return plain text
+        return await response.text();
+    },
+
+    async _handleResponse(response) {
+        const parsed = await this._parseResponse(response);
+        if (!response.ok) {
+            // parsed can be string or object
+            let message = `HTTP Error: ${response.status}`;
+            if (parsed) {
+                if (typeof parsed === 'string') {
+                    // server returned plain text (e.g. validation message)
+                    message = parsed;
+                } else if (parsed.erro || parsed.error || parsed.message) {
+                    message = parsed.erro || parsed.error || parsed.message;
+                }
+            }
+            throw new Error(message);
+        }
+        return parsed;
+    },
+
     async get(url) {
         try {
             const response = await fetch(`${API_BASE_URL}${url}`);
-            if (!response.ok) {
-                throw new Error(`HTTP Error: ${response.status}`);
-            }
-            return await response.json();
+            return await this._handleResponse(response);
         } catch (error) {
             console.error('GET Error:', error);
             throw error;
@@ -90,14 +114,8 @@ const httpClient = {
                 },
                 body: JSON.stringify(data),
             });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.erro || `HTTP Error: ${response.status}`);
-            }
-            
-            return result;
+
+            return await this._handleResponse(response);
         } catch (error) {
             console.error('POST Error:', error);
             throw error;
@@ -113,14 +131,8 @@ const httpClient = {
                 },
                 body: JSON.stringify(data),
             });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.erro || `HTTP Error: ${response.status}`);
-            }
-            
-            return result;
+
+            return await this._handleResponse(response);
         } catch (error) {
             console.error('PUT Error:', error);
             throw error;
@@ -132,13 +144,8 @@ const httpClient = {
             const response = await fetch(`${API_BASE_URL}${url}`, {
                 method: 'DELETE',
             });
-            
-            if (!response.ok) {
-                const result = await response.json();
-                throw new Error(result.erro || `HTTP Error: ${response.status}`);
-            }
-            
-            return await response.json();
+
+            return await this._handleResponse(response);
         } catch (error) {
             console.error('DELETE Error:', error);
             throw error;

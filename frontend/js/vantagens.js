@@ -16,7 +16,7 @@ class VantagensManager {
 
     async loadEmpresas() {
         try {
-            this.empresas = await appUtils.httpClient.get('/api/empresas');
+            this.empresas = await appUtils.httpClient.get('/empresas');
             this.populateEmpresaSelects();
         } catch (error) {
             console.error('Erro ao carregar empresas:', error);
@@ -42,19 +42,19 @@ class VantagensManager {
         try {
             this.showLoading(true);
 
-            let url = '/api/vantagens';
+            let url = '/vantagens';
             
             // Apply filters
             if (filters.empresa) {
-                url = `/api/vantagens/empresa/${filters.empresa}`;
+                url = `/vantagens/empresa/${filters.empresa}`;
             } else if (filters.nome) {
-                url = `/api/vantagens/nome?nome=${encodeURIComponent(filters.nome)}`;
+                url = `/vantagens/nome?nome=${encodeURIComponent(filters.nome)}`;
             } else if (filters.maisBaratas) {
-                url = '/api/vantagens/mais-baratas';
+                url = '/vantagens/mais-baratas';
             } else if (filters.maisCaras) {
-                url = '/api/vantagens/mais-caras';
+                url = '/vantagens/mais-caras';
             } else if (filters.ativas !== undefined) {
-                url = filters.ativas ? '/api/vantagens/ativas' : '/api/vantagens';
+                url = filters.ativas ? '/vantagens/ativas' : '/vantagens';
             }
 
             this.vantagens = await appUtils.httpClient.get(url);
@@ -247,7 +247,7 @@ class VantagensManager {
 
     async editVantagem(id) {
         try {
-            const vantagem = await appUtils.httpClient.get(`/api/vantagens/${id}`);
+            const vantagem = await appUtils.httpClient.get(`/vantagens/${id}`);
             this.currentEditId = id;
             this.fillForm(vantagem);
             
@@ -263,7 +263,7 @@ class VantagensManager {
 
     async viewVantagem(id) {
         try {
-            const vantagem = await appUtils.httpClient.get(`/api/vantagens/${id}`);
+            const vantagem = await appUtils.httpClient.get(`/vantagens/${id}`);
             this.showVantagemDetails(vantagem);
         } catch (error) {
             appUtils.showError('Erro ao carregar dados da vantagem: ' + error.message);
@@ -318,8 +318,7 @@ class VantagensManager {
     async toggleStatus(id, currentStatus) {
         try {
             const action = currentStatus ? 'desativar' : 'ativar';
-            const endpoint = `/api/vantagens/${id}/${action}`;
-            
+            const endpoint = `/vantagens/${id}/${action}`;
             await appUtils.httpClient.post(endpoint);
             
             const message = currentStatus ? 'Vantagem desativada com sucesso!' : 'Vantagem ativada com sucesso!';
@@ -371,10 +370,10 @@ class VantagensManager {
 
             try {
                 if (this.currentEditId) {
-                    await appUtils.httpClient.put(`/api/vantagens/${this.currentEditId}`, formData);
+                    await appUtils.httpClient.put(`/vantagens/${this.currentEditId}`, formData);
                     appUtils.showSuccess('Vantagem atualizada com sucesso!');
                 } else {
-                    await appUtils.httpClient.post('/api/vantagens', formData);
+                    await appUtils.httpClient.post('/vantagens', formData);
                     appUtils.showSuccess('Vantagem cadastrada com sucesso!');
                 }
 
@@ -474,7 +473,7 @@ class VantagensManager {
         }
 
         try {
-            await appUtils.httpClient.delete(`/api/vantagens/${id}`);
+            await appUtils.httpClient.delete(`/vantagens/${id}`);
             appUtils.showSuccess('Vantagem excluída com sucesso!');
             await this.loadVantagens();
         } catch (error) {

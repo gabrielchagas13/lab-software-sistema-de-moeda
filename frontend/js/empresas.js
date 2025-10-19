@@ -65,6 +65,11 @@ class EmpresasManager {
     }
 
     setupEventListeners() {
+        // New Empresa button
+        const novaEmpresaBtn = document.getElementById('novaEmpresaBtn');
+        if (novaEmpresaBtn) {
+            novaEmpresaBtn.addEventListener('click', () => this.showEmpresaModal());
+        }
         // CNPJ mask
         const cnpjInput = document.getElementById('cnpj');
         if (cnpjInput) {
@@ -158,10 +163,12 @@ class EmpresasManager {
         const formData = this.getFormData();
         
         try {
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Salvando...';
-            submitBtn.disabled = true;
+            const submitBtn = document.getElementById('salvarEmpresaBtn');
+            const originalHtml = submitBtn ? submitBtn.innerHTML : null;
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Salvando...';
+                submitBtn.disabled = true;
+            }
 
             if (this.currentEditId) {
                 await appUtils.httpClient.put(`/empresas/${this.currentEditId}`, formData);
@@ -171,14 +178,23 @@ class EmpresasManager {
                 appUtils.showSuccess('Empresa cadastrada com sucesso!');
             }
 
+            // Close modal after success
+            const modalEl = document.getElementById('empresaModal');
+            if (modalEl) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modalInstance.hide();
+            }
+
             this.resetForm();
             await this.loadEmpresas();
         } catch (error) {
             appUtils.showError('Erro ao salvar empresa: ' + error.message);
         } finally {
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.textContent = this.currentEditId ? 'Atualizar Empresa' : 'Cadastrar Empresa';
-            submitBtn.disabled = false;
+            const submitBtn = document.getElementById('salvarEmpresaBtn');
+            if (submitBtn) {
+                submitBtn.innerHTML = this.currentEditId ? '<i class="fas fa-save me-2"></i>Atualizar Empresa' : '<i class="fas fa-save me-2"></i>Salvar Empresa';
+                submitBtn.disabled = false;
+            }
         }
     }
 
@@ -186,34 +202,34 @@ class EmpresasManager {
         this.clearErrors();
         let isValid = true;
 
-        const formData = this.getFormData();
+        const data = this.getFormData();
 
         // Required field validation
-        const requiredFields = ['nome', 'nomeFantasia', 'cnpj', 'endereco', 'email'];
-        
+        const requiredFields = ['nome', 'cnpj', 'endereco', 'email'];
+
         requiredFields.forEach(field => {
-            if (!formData[field] || formData[field].trim() === '') {
+            if (!data[field] || String(data[field]).trim() === '') {
                 this.showFieldError(field, 'Este campo é obrigatório');
                 isValid = false;
             }
         });
 
         // Password validation (only for new users or when password is provided)
-        if (!this.currentEditId || formData.senha) {
-            if (!formData.senha || formData.senha.length < 6) {
+        if (!this.currentEditId || data.senha) {
+            if (!data.senha || data.senha.length < 6) {
                 this.showFieldError('senha', 'Senha deve ter no mínimo 6 caracteres');
                 isValid = false;
             }
         }
 
         // Email validation
-        if (formData.email && !appUtils.validateEmail(formData.email)) {
+        if (data.email && !appUtils.validateEmail(data.email)) {
             this.showFieldError('email', 'Email deve ter formato válido');
             isValid = false;
         }
 
         // CNPJ validation
-        if (formData.cnpj && !appUtils.validateCNPJ(formData.cnpj)) {
+        if (data.cnpj && !appUtils.validateCNPJ(data.cnpj)) {
             this.showFieldError('cnpj', 'CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX');
             isValid = false;
         }
@@ -222,15 +238,22 @@ class EmpresasManager {
     }
 
     getFormData() {
-        const form = document.getElementById('empresaForm');
-        const formData = new FormData(form);
-        const data = {};
-        
-        for (let [key, value] of formData.entries()) {
-            data[key] = value;
-        }
-        
-        return data;
+        // Inputs do not têm atributo 'name', então lemos diretamente pelos IDs
+        const get = (id) => {
+            const el = document.getElementById(id);
+            return el ? el.value : '';
+        };
+
+        return {
+            nome: String(get('nome')).trim(),
+            nomeFantasia: String(get('nomeFantasia')).trim(),
+            cnpj: String(get('cnpj')).trim(),
+            telefone: String(get('telefone')).trim(),
+            endereco: String(get('endereco')).trim(),
+            email: String(get('email')).trim(),
+            senha: get('senha'),
+            descricao: String(get('descricao')).trim()
+        };
     }
 
     clearErrors() {
@@ -278,11 +301,14 @@ class EmpresasManager {
         document.getElementById('senha').value = ''; // Don't fill password
         
         // Update form UI
-        document.getElementById('formTitle').textContent = 'Editar Empresa';
-        document.getElementById('submitBtn').textContent = 'Atualizar Empresa';
-        
-        // Scroll to form
-        document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+        const modalTitle = document.getElementById('modalTitle');
+        if (modalTitle) modalTitle.textContent = 'Editar Empresa';
+        const saveBtn = document.getElementById('salvarEmpresaBtn');
+        if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Atualizar Empresa';
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('empresaModal'));
+        modal.show();
     }
 
     async deleteEmpresa(id) {
@@ -302,14 +328,69 @@ class EmpresasManager {
 
     resetForm() {
         this.currentEditId = null;
-        
         document.getElementById('empresaForm').reset();
         document.getElementById('empresaId').value = '';
-        
-        document.getElementById('formTitle').textContent = 'Cadastrar Nova Empresa';
-        document.getElementById('submitBtn').textContent = 'Cadastrar Empresa';
-        
+
+        const modalTitle = document.getElementById('modalTitle');
+        if (modalTitle) modalTitle.textContent = 'Nova Empresa';
+        const saveBtn = document.getElementById('salvarEmpresaBtn');
+        if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Salvar Empresa';
+
         this.clearErrors();
+    }
+
+    showEmpresaModal(empresa = null) {
+        this.currentEditId = empresa ? empresa.id : null;
+        const modalEl = document.getElementById('empresaModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const modalTitle = document.getElementById('modalTitle');
+        const saveBtn = document.getElementById('salvarEmpresaBtn');
+
+        if (empresa) {
+            if (modalTitle) modalTitle.textContent = 'Editar Empresa';
+            if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Atualizar Empresa';
+            this.fillFormForEdit(empresa);
+        } else {
+            if (modalTitle) modalTitle.textContent = 'Nova Empresa';
+            if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Salvar Empresa';
+            this.resetForm();
+        }
+
+        modal.show();
+    }
+
+    exportEmpresas() {
+        if (this.empresas.length === 0) {
+            appUtils.showWarning('Nenhuma empresa para exportar');
+            return;
+        }
+
+        const headers = ['ID', 'Nome', 'Nome Fantasia', 'CNPJ', 'Email', 'Telefone', 'Endereço', 'Descrição'];
+        const rows = this.empresas.map(e => [
+            e.id,
+            e.nome,
+            e.nomeFantasia || '',
+            e.cnpj || '',
+            e.email || '',
+            e.telefone || '',
+            e.endereco || '',
+            e.descricao || ''
+        ]);
+
+        const csvContent = [headers, ...rows]
+            .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `empresas_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     handleSearch() {
