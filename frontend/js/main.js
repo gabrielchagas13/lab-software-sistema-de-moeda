@@ -15,6 +15,13 @@ const formatDate = (dateString) => {
     return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
 };
 
+const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+    const num = Number(value);
+    if (Number.isNaN(num)) return value;
+    return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+};
+
 // Alert functions
 const showAlert = (message, type = 'info') => {
     const alertDiv = document.createElement('div');
@@ -193,6 +200,7 @@ window.appUtils = {
     formatCPF,
     formatCNPJ,
     formatDate,
+    formatCurrency,
     showAlert,
     showSuccess,
     showError,

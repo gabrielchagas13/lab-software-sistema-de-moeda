@@ -63,6 +63,7 @@ class TransacoesManager {
     async loadVantagens() {
         try {
             this.vantagens = await appUtils.httpClient.get('/vantagens');
+            console.log('[transacoes] vantagens carregadas:', Array.isArray(this.vantagens) ? this.vantagens.length : typeof this.vantagens, this.vantagens && this.vantagens.slice ? this.vantagens.slice(0,5) : this.vantagens);
         } catch (error) {
             console.error('Erro ao carregar vantagens:', error);
         }
@@ -189,11 +190,42 @@ class TransacoesManager {
     }
 
     showResgatarVantagemModal() {
-        const modal = new bootstrap.Modal(document.getElementById('resgatarVantagemModal'));
-        document.getElementById('resgatarVantagemForm').reset();
+        const modalEl = document.getElementById('resgatarVantagemModal');
+        const modal = new bootstrap.Modal(modalEl);
+        const form = document.getElementById('resgatarVantagemForm');
+        if (form) form.reset();
         this.vantagemSelecionada = null;
-        document.getElementById('confirmarResgateBtn').disabled = true;
+        const confirmarBtn = document.getElementById('confirmarResgateBtn');
+        if (confirmarBtn) confirmarBtn.disabled = true;
+
+        // Show loading placeholder while we fetch vantagens for the currently selected aluno
+        const container = document.getElementById('vantagensDisponiveis');
+        if (container) container.innerHTML = '<div class="col-12"><p class="text-muted">Carregando vantagens...</p></div>';
+
         modal.show();
+
+        // After modal is shown, ensure alunos are loaded and then populate vantagens based on selected aluno
+        setTimeout(() => {
+            // If aluno selection exists in modal, trigger loading
+            const alunoSelect = document.getElementById('alunoResgateId');
+            const alunoId = alunoSelect ? alunoSelect.value : null;
+            if (!alunoId) {
+                if (container) container.innerHTML = '<div class="col-12"><p class="text-muted">Selecione um aluno primeiro</p></div>';
+                return;
+            }
+            // Ensure vantagens list is up-to-date by reloading from server
+            this.loadVantagens().then(() => {
+                try {
+                    this.loadVantagensDisponiveis();
+                } catch (err) {
+                    console.error('Erro ao popular vantagens no modal:', err);
+                    if (container) container.innerHTML = '<div class="col-12"><p class="text-muted">Erro ao carregar vantagens</p></div>';
+                }
+            }).catch(err => {
+                console.error('Erro ao recarregar vantagens:', err);
+                if (container) container.innerHTML = '<div class="col-12"><p class="text-muted">Erro ao carregar vantagens</p></div>';
+            });
+        }, 150);
     }
 
     async handleEnviarMoedas() {
@@ -222,34 +254,53 @@ class TransacoesManager {
     }
 
     async loadVantagensDisponiveis() {
-        const alunoId = document.getElementById('alunoResgateId').value;
+        const selectEl = document.getElementById('alunoResgateId');
+        const alunoId = selectEl ? selectEl.value : null;
         const container = document.getElementById('vantagensDisponiveis');
-        
+        const confirmarBtn = document.getElementById('confirmarResgateBtn');
+
+        if (!container) return;
+
         if (!alunoId) {
             container.innerHTML = '<div class="col-12"><p class="text-muted">Selecione um aluno primeiro</p></div>';
+            if (confirmarBtn) confirmarBtn.disabled = true;
             return;
         }
 
         const aluno = this.alunos.find(a => a.id == alunoId);
-        const vantagensAcessiveis = this.vantagens.filter(v => v.ativo && v.custoMoedas <= aluno.saldoMoedas);
+        if (!aluno) {
+            container.innerHTML = '<div class="col-12"><p class="text-muted">Aluno não encontrado</p></div>';
+            if (confirmarBtn) confirmarBtn.disabled = true;
+            return;
+        }
+
+        const vantagensList = Array.isArray(this.vantagens) ? this.vantagens : [];
+    console.log('[transacoes] aluno saldo:', aluno.saldoMoedas, 'vantagens total:', vantagensList.length);
+    const vantagensAcessiveis = vantagensList.filter(v => (v.ativa === true || v.ativo === true) && (v.custoMoedas || v.custo || 0) <= (aluno.saldoMoedas || 0));
+    console.log('[transacoes] vantagens acessiveis para aluno', aluno.id, vantagensAcessiveis.length, vantagensAcessiveis.map(v=>({id:v.id,nome:v.nome,custo:v.custoMoedas,ativa:v.ativa})));
 
         if (vantagensAcessiveis.length === 0) {
             container.innerHTML = '<div class="col-12"><p class="text-muted">Nenhuma vantagem disponível para este aluno</p></div>';
+            if (confirmarBtn) confirmarBtn.disabled = true;
             return;
         }
 
         container.innerHTML = vantagensAcessiveis.map(vantagem => `
             <div class="col-md-6 mb-3">
-                <div class="card vantagem-card" data-vantagem-id="${vantagem.id}">
+                <div class="card vantagem-card" data-vantagem-id="${vantagem.id}" style="cursor:pointer">
                     <div class="card-body">
                         <h6 class="card-title">${vantagem.nome}</h6>
-                        <p class="card-text">${vantagem.descricao}</p>
-                        <p class="text-primary fw-bold">${vantagem.custoMoedas} moedas</p>
-                        <small class="text-muted">${vantagem.empresa.nome}</small>
+                        <p class="card-text">${vantagem.descricao || ''}</p>
+                        <p class="text-primary fw-bold">${appUtils.formatCurrency(vantagem.custoMoedas)} moedas</p>
+                        <small class="text-muted">${(vantagem.empresa && vantagem.empresa.nome) || vantagem.empresaNome || ''}</small>
                     </div>
                 </div>
             </div>
         `).join('');
+
+        // reset selection and disable confirm until user selects
+        this.vantagemSelecionada = null;
+        if (confirmarBtn) confirmarBtn.disabled = true;
 
         // Add click handlers to vantagem cards
         container.querySelectorAll('.vantagem-card').forEach(card => {
@@ -257,7 +308,7 @@ class TransacoesManager {
                 container.querySelectorAll('.vantagem-card').forEach(c => c.classList.remove('border-success'));
                 card.classList.add('border-success');
                 this.vantagemSelecionada = parseInt(card.dataset.vantagemId);
-                document.getElementById('confirmarResgateBtn').disabled = false;
+                if (confirmarBtn) confirmarBtn.disabled = false;
             });
         });
     }
@@ -288,9 +339,9 @@ class TransacoesManager {
         const tbody = document.getElementById('transacoesTableBody');
         let transacoesFiltradas = this.transacoes;
 
-        // Apply tipo filter
+        // Apply tipo filter (support novo campo tipoTransacao e legado tipo)
         if (this.tipoFilter) {
-            transacoesFiltradas = transacoesFiltradas.filter(t => t.tipo === this.tipoFilter);
+            transacoesFiltradas = transacoesFiltradas.filter(t => (t.tipoTransacao || t.tipo) === this.tipoFilter);
         }
 
         // Apply action filter
@@ -299,20 +350,22 @@ class TransacoesManager {
                 const umDiaAtras = new Date();
                 umDiaAtras.setDate(umDiaAtras.getDate() - 1);
                 transacoesFiltradas = transacoesFiltradas.filter(t => 
-                    new Date(t.dataHora) > umDiaAtras
+                    new Date(t.dataTransacao || t.dataHora) > umDiaAtras
                 );
                 break;
             case 'envios':
                 transacoesFiltradas = transacoesFiltradas.filter(t => 
-                    t.tipo === 'ENVIO_MOEDA'
+                    (t.tipoTransacao || t.tipo) === 'ENVIO_MOEDA'
                 );
                 break;
             case 'resgates':
                 transacoesFiltradas = transacoesFiltradas.filter(t => 
-                    t.tipo === 'RESGATE_VANTAGEM'
+                    (t.tipoTransacao || t.tipo) === 'RESGATE_VANTAGEM'
                 );
                 break;
         }
+
+        if (!tbody) return;
 
         if (transacoesFiltradas.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhuma transação encontrada</td></tr>';
@@ -320,17 +373,23 @@ class TransacoesManager {
         }
 
         tbody.innerHTML = transacoesFiltradas.map(transacao => {
-            const data = new Date(transacao.dataHora).toLocaleString('pt-BR');
-            const badgeClass = this.getTipoBadgeClass(transacao.tipo);
-            
+            // Use DTO fields from backend
+            const data = transacao.dataTransacao ? appUtils.formatDate(transacao.dataTransacao) : '—';
+            const tipo = transacao.tipoTransacao || transacao.tipo || 'UNKNOWN';
+            const badgeClass = this.getTipoBadgeClass(tipo);
+            const remetente = transacao.remetenteNome || transacao.remetente ? (transacao.remetenteNome || (transacao.remetente && transacao.remetente.nome)) : 'Sistema';
+            const destinatario = transacao.destinatarioNome || (transacao.destinatario && transacao.destinatario.nome) || '-';
+            const valor = transacao.valor !== undefined && transacao.valor !== null ? appUtils.formatCurrency(transacao.valor) : '';
+            const vantagemInfo = transacao.vantagemNome ? `${transacao.vantagemNome} (${transacao.empresaNome || ''})` : (transacao.codigoCupom ? `Cupom: ${transacao.codigoCupom}` : '');
+
             return `
                 <tr>
                     <td>#${transacao.id}</td>
-                    <td><span class="badge ${badgeClass}">${this.formatTipo(transacao.tipo)}</span></td>
-                    <td>${this.formatRemetente(transacao)}</td>
-                    <td>${this.formatDestinatario(transacao)}</td>
-                    <td><span class="fw-bold text-primary">${transacao.valor}</span></td>
-                    <td>${transacao.descricao}</td>
+                    <td><span class="badge ${badgeClass}">${this.formatTipo(tipo)}</span></td>
+                    <td>${remetente}</td>
+                    <td>${destinatario}</td>
+                    <td><span class="badge bg-primary">${valor}</span></td>
+                    <td>${transacao.descricao || ''}</td>
                     <td>${data}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-info" onclick="transacoesManager.viewDetails(${transacao.id})">
@@ -361,27 +420,56 @@ class TransacoesManager {
     }
 
     formatRemetente(transacao) {
-        if (transacao.professorRemetente) {
-            return `Prof. ${transacao.professorRemetente.nome}`;
-        }
+        // Prefer DTO fields
+        if (transacao.remetenteNome) return transacao.remetenteNome;
+        if (transacao.professorRemetente) return `Prof. ${transacao.professorRemetente.nome}`;
         return 'Sistema';
     }
 
     formatDestinatario(transacao) {
-        if (transacao.alunoDestinatario) {
-            return transacao.alunoDestinatario.nome;
-        }
-        if (transacao.professorDestinatario) {
-            return `Prof. ${transacao.professorDestinatario.nome}`;
-        }
+        if (transacao.destinatarioNome) return transacao.destinatarioNome;
+        if (transacao.alunoDestinatario) return transacao.alunoDestinatario.nome;
+        if (transacao.professorDestinatario) return `Prof. ${transacao.professorDestinatario.nome}`;
         return '-';
     }
 
     viewDetails(transacaoId) {
         const transacao = this.transacoes.find(t => t.id === transacaoId);
-        if (transacao) {
-            alert(`Detalhes da Transação #${transacao.id}:\n\n${JSON.stringify(transacao, null, 2)}`);
+        if (!transacao) return;
+
+        // Create modal if not exists
+        let modalEl = document.getElementById('transacaoDetailsModal');
+        if (!modalEl) {
+            modalEl = document.createElement('div');
+            modalEl.id = 'transacaoDetailsModal';
+            modalEl.className = 'modal fade';
+            modalEl.innerHTML = `
+                <div class="modal-dialog modal-lg"><div class="modal-content">
+                    <div class="modal-header"><h5 class="modal-title">Detalhes da Transação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body"><div id="transacaoDetailsContent"></div></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button></div>
+                </div></div>`;
+            document.body.appendChild(modalEl);
         }
+
+        const detailsHtml = `
+            <dl class="row">
+                <dt class="col-sm-3">ID</dt><dd class="col-sm-9">${transacao.id}</dd>
+                <dt class="col-sm-3">Tipo</dt><dd class="col-sm-9">${this.formatTipo(transacao.tipoTransacao || transacao.tipo)}</dd>
+                <dt class="col-sm-3">Remetente</dt><dd class="col-sm-9">${transacao.remetenteNome || '-'}</dd>
+                <dt class="col-sm-3">Destinatário</dt><dd class="col-sm-9">${transacao.destinatarioNome || '-'}</dd>
+                <dt class="col-sm-3">Valor</dt><dd class="col-sm-9">${appUtils.formatCurrency(transacao.valor)}</dd>
+                <dt class="col-sm-3">Descrição</dt><dd class="col-sm-9">${transacao.descricao || ''}</dd>
+                <dt class="col-sm-3">Data</dt><dd class="col-sm-9">${transacao.dataTransacao ? appUtils.formatDate(transacao.dataTransacao) : ''}</dd>
+                ${transacao.vantagemNome ? `<dt class="col-sm-3">Vantagem</dt><dd class="col-sm-9">${transacao.vantagemNome} (${transacao.empresaNome || ''})</dd>` : ''}
+                ${transacao.codigoCupom ? `<dt class="col-sm-3">Cupom</dt><dd class="col-sm-9">${transacao.codigoCupom}</dd>` : ''}
+            </dl>
+        `;
+
+        document.getElementById('transacaoDetailsContent').innerHTML = detailsHtml;
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
     }
 
     exportTransacoes() {
@@ -403,12 +491,12 @@ class TransacoesManager {
         const headers = ['ID', 'Tipo', 'Remetente', 'Destinatário', 'Valor', 'Descrição', 'Data'];
         const rows = data.map(t => [
             t.id,
-            this.formatTipo(t.tipo),
+            this.formatTipo(t.tipoTransacao || t.tipo),
             this.formatRemetente(t),
             this.formatDestinatario(t),
             t.valor,
             t.descricao,
-            new Date(t.dataHora).toLocaleString('pt-BR')
+            appUtils.formatDate(t.dataTransacao || t.dataHora)
         ]);
 
         const csvContent = [headers, ...rows]
