@@ -130,11 +130,32 @@ class AlunosManager {
             this.handleFormSubmit();
         });
         
-        // --- LÓGICA DE VALIDAÇÃO CORRIGIDA ---
+        // --- VALIDAÇÃO INTERATIVA PARA TODOS OS CAMPOS ---
 
+        // Função auxiliar para validação de campo obrigatório
+        const addRequiredFieldValidator = (fieldId) => {
+            const input = document.getElementById(fieldId);
+            if (input) {
+                input.addEventListener('blur', () => {
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                    } else {
+                        input.classList.remove('is-invalid');
+                    }
+                });
+            }
+        };
+        
+        // Aplica a validação de campo obrigatório para os campos de texto simples
+        addRequiredFieldValidator('nome');
+        addRequiredFieldValidator('curso');
+        addRequiredFieldValidator('endereco');
+        addRequiredFieldValidator('instituicaoId');
+
+
+        // Validação específica para Email
         const emailInput = document.getElementById('email');
         emailInput.addEventListener('blur', () => {
-            // Agora verifica se está vazio OU se o formato é inválido
             if (!emailInput.value.trim()) {
                 emailInput.classList.add('is-invalid');
             } else if (!appUtils.validateEmail(emailInput.value)) {
@@ -144,6 +165,7 @@ class AlunosManager {
             }
         });
 
+        // Validação e máscara para CPF
         const cpfInput = document.getElementById('cpf');
         if (cpfInput) {
             cpfInput.addEventListener('blur', () => {
@@ -157,11 +179,11 @@ class AlunosManager {
             cpfInput.addEventListener('input', () => appUtils.maskCPF(cpfInput));
         }
 
+        // Validação específica para RG
         const rgInput = document.getElementById('rg');
         if (rgInput) {
             rgInput.addEventListener('blur', () => {
                 const rgValue = rgInput.value.replace(/\D/g, ''); 
-                // Agora verifica se está vazio OU se o tamanho está incorreto
                 if (!rgInput.value.trim()) {
                     rgInput.classList.add('is-invalid');
                 } else if (rgValue.length < 8 || rgValue.length > 9) {
@@ -172,7 +194,19 @@ class AlunosManager {
             });
         }
         
-        // --- FIM DA CORREÇÃO ---
+        // Validação específica para Senha (só é obrigatória ao criar)
+        const senhaInput = document.getElementById('senha');
+        if (senhaInput) {
+            senhaInput.addEventListener('blur', () => {
+                if (!this.currentEditId && (!senhaInput.value || senhaInput.value.length < 6)) {
+                    senhaInput.classList.add('is-invalid');
+                } else {
+                    senhaInput.classList.remove('is-invalid');
+                }
+            });
+        }
+        
+        // --- FIM DA VALIDAÇÃO ---
 
         document.getElementById('searchInput').addEventListener('input', () => {
             this.renderAlunos();
@@ -341,6 +375,8 @@ class AlunosManager {
     resetForm() {
         this.currentEditId = null;
         document.getElementById('alunoForm').reset();
+        // Limpa também as classes de validação
+        document.querySelectorAll('#alunoForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
     }
 
     exportAlunos() {
