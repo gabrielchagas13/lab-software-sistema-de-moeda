@@ -45,12 +45,10 @@ class AlunosManager {
         const select = document.getElementById('instituicaoId');
         if (!select) return;
         
-        // Clear existing options (keep the first placeholder option)
         while (select.children.length > 1) {
             select.removeChild(select.lastChild);
         }
         
-        // Add institution options
         this.instituicoes.forEach(instituicao => {
             const option = document.createElement('option');
             option.value = instituicao.id;
@@ -91,7 +89,6 @@ class AlunosManager {
     getFilteredAlunos() {
         let filtered = [...this.alunos];
         
-        // Apply search filter
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         if (searchTerm) {
             filtered = filtered.filter(aluno => 
@@ -100,16 +97,13 @@ class AlunosManager {
             );
         }
 
-        // Apply course filter
         const cursoFilter = document.getElementById('cursoFilter').value;
         if (cursoFilter) {
             filtered = filtered.filter(aluno => aluno.curso === cursoFilter);
         }
 
-        // Apply status filters
         switch (this.filtroAtivo) {
             case 'active':
-                // Assume active students (could be based on some field)
                 break;
             case 'rich':
                 filtered = filtered.filter(aluno => (aluno.saldoMoedas || 0) > 0);
@@ -120,7 +114,6 @@ class AlunosManager {
     }
 
     populateFilters() {
-        // Populate course filter
         const cursos = [...new Set(this.alunos.map(a => a.curso))].sort();
         const cursoFilter = document.getElementById('cursoFilter');
         cursoFilter.innerHTML = '<option value="">Todos os cursos</option>' +
@@ -128,18 +121,36 @@ class AlunosManager {
     }
 
     setupEventListeners() {
-        // New Aluno button
         document.getElementById('novoAlunoBtn').addEventListener('click', () => {
             this.showAlunoModal();
         });
 
-        // Form submission
         document.getElementById('alunoForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleFormSubmit();
         });
+        
+        const emailInput = document.getElementById('email');
+        emailInput.addEventListener('blur', () => {
+            if (emailInput.value && !appUtils.validateEmail(emailInput.value)) {
+                emailInput.classList.add('is-invalid');
+            } else {
+                emailInput.classList.remove('is-invalid');
+            }
+        });
 
-        // Search and filter inputs
+        const cpfInput = document.getElementById('cpf');
+        if (cpfInput) {
+            cpfInput.addEventListener('blur', () => {
+                if (!cpfInput.value.trim()) {
+                    cpfInput.classList.add('is-invalid');
+                } else {
+                    cpfInput.classList.remove('is-invalid');
+                }
+            });
+            cpfInput.addEventListener('input', () => appUtils.maskCPF(cpfInput));
+        }
+
         document.getElementById('searchInput').addEventListener('input', () => {
             this.renderAlunos();
         });
@@ -148,7 +159,6 @@ class AlunosManager {
             this.renderAlunos();
         });
 
-        // Filter buttons
         document.querySelectorAll('[data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
@@ -157,19 +167,12 @@ class AlunosManager {
                 this.renderAlunos();
             });
         });
-
-        // CPF mask
-        const cpfInput = document.getElementById('cpf');
-        if (cpfInput) {
-            cpfInput.addEventListener('input', () => appUtils.maskCPF(cpfInput));
-        }
     }
 
     showAlunoModal(aluno = null) {
         this.currentEditId = aluno ? aluno.id : null;
         const modal = new bootstrap.Modal(document.getElementById('alunoModal'));
         
-        // Update modal title and button
         const modalTitle = document.getElementById('modalTitle');
         const saveBtn = document.getElementById('salvarAlunoBtn');
         
@@ -206,7 +209,6 @@ class AlunosManager {
         
         try {
             const saveBtn = document.getElementById('salvarAlunoBtn');
-            const originalText = saveBtn.innerHTML;
             saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Salvando...';
             saveBtn.disabled = true;
 
@@ -233,7 +235,6 @@ class AlunosManager {
         let isValid = true;
         const requiredFields = ['nome', 'email', 'cpf', 'rg', 'endereco', 'curso', 'instituicaoId'];
         
-        // Clear previous validation states
         document.querySelectorAll('.form-control').forEach(input => {
             input.classList.remove('is-invalid');
         });
@@ -246,14 +247,12 @@ class AlunosManager {
             }
         });
 
-        // Password validation (only for new users)
         const senhaInput = document.getElementById('senha');
         if (!this.currentEditId && (!senhaInput.value || senhaInput.value.length < 6)) {
             senhaInput.classList.add('is-invalid');
             isValid = false;
         }
 
-        // Email validation
         const emailInput = document.getElementById('email');
         if (emailInput.value && !appUtils.validateEmail(emailInput.value)) {
             emailInput.classList.add('is-invalid');
@@ -286,19 +285,38 @@ class AlunosManager {
         }
     }
 
+    // --- FUNÇÃO ATUALIZADA ---
     async deleteAluno(id) {
         const aluno = this.alunos.find(a => a.id === id);
         if (!aluno) return;
 
-        if (confirm(`Tem certeza que deseja excluir o aluno "${aluno.nome}"?`)) {
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        document.getElementById('confirmModalTitle').textContent = 'Confirmar Exclusão';
+        document.getElementById('confirmModalBody').textContent = `Tem certeza que deseja excluir o aluno "${aluno.nome}"?`;
+        
+        const confirmBtn = document.getElementById('confirmModalBtn');
+        
+        // .onclick é uma forma segura de garantir que teremos apenas um evento por vez
+        confirmBtn.onclick = async () => {
             try {
+                // Adiciona um feedback visual para o usuário
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+
                 await appUtils.httpClient.delete(`/alunos/${id}`);
                 appUtils.showSuccess('Aluno excluído com sucesso!');
                 await this.loadAlunos();
             } catch (error) {
                 appUtils.showError('Erro ao excluir aluno: ' + error.message);
+            } finally {
+                // Restaura o botão e esconde o modal
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = 'Confirmar';
+                confirmModal.hide();
             }
-        }
+        };
+
+        confirmModal.show();
     }
 
     resetForm() {
@@ -339,7 +357,7 @@ class AlunosManager {
         ]);
 
         const csvContent = [headers, ...rows]
-            .map(row => row.map(field => `"${field}"`).join(','))
+            .map(row => row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(','))
             .join('\n');
 
         return csvContent;
