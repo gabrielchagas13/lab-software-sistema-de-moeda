@@ -130,9 +130,14 @@ class AlunosManager {
             this.handleFormSubmit();
         });
         
+        // --- LÓGICA DE VALIDAÇÃO CORRIGIDA ---
+
         const emailInput = document.getElementById('email');
         emailInput.addEventListener('blur', () => {
-            if (emailInput.value && !appUtils.validateEmail(emailInput.value)) {
+            // Agora verifica se está vazio OU se o formato é inválido
+            if (!emailInput.value.trim()) {
+                emailInput.classList.add('is-invalid');
+            } else if (!appUtils.validateEmail(emailInput.value)) {
                 emailInput.classList.add('is-invalid');
             } else {
                 emailInput.classList.remove('is-invalid');
@@ -145,11 +150,29 @@ class AlunosManager {
                 if (!cpfInput.value.trim()) {
                     cpfInput.classList.add('is-invalid');
                 } else {
+                    // Adicione aqui uma validação de formato de CPF se tiver
                     cpfInput.classList.remove('is-invalid');
                 }
             });
             cpfInput.addEventListener('input', () => appUtils.maskCPF(cpfInput));
         }
+
+        const rgInput = document.getElementById('rg');
+        if (rgInput) {
+            rgInput.addEventListener('blur', () => {
+                const rgValue = rgInput.value.replace(/\D/g, ''); 
+                // Agora verifica se está vazio OU se o tamanho está incorreto
+                if (!rgInput.value.trim()) {
+                    rgInput.classList.add('is-invalid');
+                } else if (rgValue.length < 8 || rgValue.length > 9) {
+                    rgInput.classList.add('is-invalid');
+                } else {
+                    rgInput.classList.remove('is-invalid');
+                }
+            });
+        }
+        
+        // --- FIM DA CORREÇÃO ---
 
         document.getElementById('searchInput').addEventListener('input', () => {
             this.renderAlunos();
@@ -285,7 +308,6 @@ class AlunosManager {
         }
     }
 
-    // --- FUNÇÃO ATUALIZADA ---
     async deleteAluno(id) {
         const aluno = this.alunos.find(a => a.id === id);
         if (!aluno) return;
@@ -296,10 +318,8 @@ class AlunosManager {
         
         const confirmBtn = document.getElementById('confirmModalBtn');
         
-        // .onclick é uma forma segura de garantir que teremos apenas um evento por vez
         confirmBtn.onclick = async () => {
             try {
-                // Adiciona um feedback visual para o usuário
                 confirmBtn.disabled = true;
                 confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
 
@@ -309,7 +329,6 @@ class AlunosManager {
             } catch (error) {
                 appUtils.showError('Erro ao excluir aluno: ' + error.message);
             } finally {
-                // Restaura o botão e esconde o modal
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = 'Confirmar';
                 confirmModal.hide();
