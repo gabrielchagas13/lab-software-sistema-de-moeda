@@ -1,145 +1,107 @@
-# Sistema de Moeda Estudantil - Lab03S02
+🚀 Sistema de Moeda Estudantil (Lab03)
 
-## Implementações Realizadas
+📘 Visão Geral
 
-### ✅ Modelo ER Implementado
-- **Usuario** (classe base): id, nome, email, senha, tipo_usuario, data_criacao, ativo
-- **Aluno**: usuario_id, instituicao (texto), cpf, rg, endereco, curso, saldo_moedas, data_cadastro
-- **Professor**: usuario_id, instituicao_id, departamento, saldo_moedas, data_cadastro
-- **Empresa**: usuario_id, cnpj, nome_fantasia, telefone, endereco, descricao, data_cadastro
-- **Instituicao**: nome, endereco, telefone, email, data_criacao, ativo
-- **Vantagem**: empresa_id, nome, descricao, custo_moedas, foto, ativo, data_criacao
-- **Transacao**: id, aluno_id, professor_id, empresa_id, vantagem_id, tipo, valor, descricao, data_transacao
+O Sistema de Moeda Estudantil é uma aplicação web full-stack desenvolvida com o objetivo de gerenciar moedas virtuais utilizadas por alunos, professores, empresas e instituições parceiras.
+O sistema permite o cadastro e a interação entre esses usuários, além de possibilitar transações de moedas e resgate de vantagens.
 
-### ✅ Estratégia de Acesso ao Banco de Dados
-- **ORM**: JPA/Hibernate
-- **Padrão Repository**: Spring Data JPA
-- **Banco de Dados**: MySQL
-- **Validações**: Bean Validation (JSR-303)
+O projeto foi totalmente dockerizado, permitindo subir todo o ambiente com um único comando (docker compose up).
 
-### ✅ CRUDs Implementados
+🧱 Arquitetura do Sistema
 
-#### CRUD de Aluno
-**Backend:**
-- ✅ Controller: `/api/alunos`
-- ✅ Service: AlunoService com validações
-- ✅ Repository: AlunoRepository com queries customizadas
-- ✅ DTOs: AlunoRequestDTO e AlunoResponseDTO
+A aplicação é composta por 3 containers Docker:
 
-**Frontend:**
-- ✅ Página: `frontend/pages/alunos.html`
-- ✅ JavaScript: `frontend/js/alunos.js`
-- ✅ Funcionalidades: Cadastrar, Listar, Editar, Excluir, Buscar, Filtrar
+🧩 Frontend  	Interface web estática em HTML/CSS/JS, servida via Nginx	Porta Local: 3000
+⚙️ Backend	 API REST construída em Spring Boot 3 (Java 17)	Porta Local: 8080
+🗄️ Banco de Dados	 MySQL 8.0 com volume persistente (db_data)	Porta Local: 3307 → 3306
 
-#### CRUD de Empresa Parceira
-**Backend:**
-- ✅ Controller: `/api/empresas`
-- ✅ Service: EmpresaService com validações
-- ✅ Repository: EmpresaRepository com queries customizadas
-- ✅ DTOs: EmpresaRequestDTO e EmpresaResponseDTO
+⚙️ Tecnologias Utilizadas
 
-**Frontend:**
-- ✅ Página: `frontend/pages/empresas.html`
-- ⚠️ JavaScript: `frontend/js/empresas.js` (pendente)
+**Backend**
 
-### ✅ Configurações do Projeto
+Java 17
 
-#### Backend
-- **Framework**: Spring Boot 3.1.5
-- **Java**: 17
-- **Build**: Maven
-- **Banco**: MySQL (configurado)
-- **Segurança**: Spring Security (temporariamente desabilitada para testes)
-- **CORS**: Configurado para aceitar requisições do frontend
+Spring Boot 3.1.5
 
-#### Frontend
-- **HTML5**: Estrutura semântica
-- **CSS3**: Grid Layout, Flexbox, Design responsivo
-- **JavaScript**: ES6+, Async/Await, Classes
-- **API**: Fetch API para comunicação REST
+Spring Data JPA (Hibernate)
 
-## 🚀 Como Executar
+Spring Security (configuração básica de desenvolvimento)
 
-### 1. Configurar Banco MySQL
-Siga as instruções em: `MYSQL_SETUP.md`
+MySQL 8.0
 
-### 2. Executar Backend
-```bash
-cd backend
-# Via VS Code: Abrir SistemaMoedaApplication.java e clicar em "Run"
-# Ou via terminal (se Maven estiver instalado):
-mvn spring-boot:run
-```
+Maven
 
-### 3. Abrir Frontend
-```bash
-cd frontend
-# Abrir index.html no navegador
-# Ou usar Live Server no VS Code
-```
+Lombok
 
-## 📁 Estrutura do Projeto
+Bean Validation (JSR-303)
 
-```
-lab-software-sistema-de-moeda/
-├── backend/
-│   ├── src/main/java/com/sistemamoeda/
-│   │   ├── config/         # Configurações (CORS, Security)
-│   │   ├── controller/     # REST Controllers
-│   │   ├── dto/           # Data Transfer Objects
-│   │   ├── model/         # Entidades JPA
-│   │   ├── repository/    # Repositories Spring Data
-│   │   └── service/       # Regras de negócio
-│   ├── src/main/resources/
-│   │   └── application.properties
-│   └── pom.xml
-├── frontend/
-│   ├── css/               # Estilos CSS
-│   ├── js/                # Scripts JavaScript
-│   ├── pages/             # Páginas HTML
-│   └── index.html         # Página inicial
-├── MYSQL_SETUP.md         # Instruções MySQL
-└── README.md
-```
+**Frontend**
 
-## 🔄 Estado Atual
+HTML5 + CSS3 + JavaScript (ES6+)
 
-### ✅ Concluído
-- Modelo ER completo
-- Backend Spring Boot configurado
-- CRUD Aluno (backend + frontend)
-- CRUD Empresa (backend)
-- Configuração MySQL
-- CORS e Security configurados
-- Interface responsiva
+Fetch API para consumo da API REST
 
-### ⚠️ Pendente
-- JavaScript para CRUD de Empresas (`empresas.js`)
-- Implementação de autenticação JWT
-- Testes de integração frontend-backend
+Layout responsivo com Flexbox e Grid
 
-### 🎯 Próximos Passos
-1. Completar frontend de empresas
-2. Implementar autenticação
-3. Adicionar validações avançadas
-4. Implementar sistema de transações
+Servido via Nginx (Docker)
 
-## 🛠️ Tecnologias Utilizadas
+**Infraestrutura**
 
-**Backend:**
-- Spring Boot, Spring Data JPA, Spring Security
-- MySQL, Hibernate, Bean Validation
-- Lombok, Maven
+Docker e Docker Compose
 
-**Frontend:**
-- HTML5, CSS3, JavaScript ES6+
-- Fetch API, CSS Grid, Flexbox
-- Design responsivo
+Volume persistente (db_data)
 
-## 📝 Observações Técnicas
+Rede interna Docker (sistema-moeda-network)
 
-1. **Campo Instituição**: Simplificado como campo de texto para facilitar cadastro
-2. **Segurança**: Temporariamente desabilitada para facilitar testes
-3. **CORS**: Configurado para desenvolvimento local
-4. **Validações**: Implementadas tanto no frontend quanto backend
-5. **Responsividade**: Interface adaptável para desktop e mobile
+**🧩 Entidades e Modelo de Dados
+**
+
+**🧰 Execução do Projeto (via Docker)
+1️⃣ Pré-requisitos**
+
+Certifique-se de ter instalado:
+
+Docker Desktop (ou Docker Engine)
+
+Docker Compose
+
+**2️⃣ Subir o ambiente completo**
+
+Na raiz do projeto (lab-software-sistema-de-moeda/):
+
+docker compose up --build
+
+
+Isso irá:
+
+Construir a imagem do frontend (Nginx);
+
+Subir o backend Spring Boot;
+
+Criar o banco MySQL com volume persistente (db_data).
+
+**3️⃣ Acessar os serviços**
+**Serviço	URL**
+
+🌐 Frontend	http://localhost:3000
+
+⚙️ Backend (API)	http://localhost:8080
+
+🗄️ Banco (MySQL)	localhost:3307 (usuário: root / senha: root)
+4️⃣ Parar e remover containers
+
+docker compose down
+
+
+
+
+
+🧠 Notas Técnicas
+
+spring.jpa.hibernate.ddl-auto=create-drop está configurado para ambiente de desenvolvimento, recriando o schema a cada execução.
+
+Volume Docker (db_data) deveria manter os dados mesmo após terminar os containers, mas esse não é o cenário que observamos. Estamos investigando a causa desse problema para finalizar  o processo de dockerização completamente.
+
+Senha gerada pelo Spring Security é temporária e aparece no log do backend.
+
+Frontend e backend se comunicam via rede interna do Docker (sistema-moeda-network).
