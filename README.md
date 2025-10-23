@@ -7,6 +7,9 @@ O sistema permite o cadastro e a interação entre esses usuários, além de pos
 
 O projeto foi totalmente dockerizado, permitindo subir todo o ambiente com um único comando (docker compose up).
 
+Vídeo do sistem:
+https://www.youtube.com/watch?v=SAH3_JxjsGQ
+
 🧱 Arquitetura do Sistema
 
 A aplicação é composta por 3 containers Docker:
