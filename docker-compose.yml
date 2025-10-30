@@ -28,6 +28,7 @@ services:
       - sistema-moeda-network
 
   backend:
+    build: ./backend
     image: sistemamoeda-backend-test
     container_name: sistema-moeda-backend
     restart: always
