@@ -107,6 +107,11 @@ class ProfessoresManager {
                                 title="Visualizar">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="professoresManager.showExtrato(${professor.id})"
+                                title="Ver Extrato">
+                        <i class="fas fa-list-alt"></i>
+                        </button>
                         <button class="btn btn-sm btn-outline-success" 
                                 onclick="professoresManager.showAddCoinsModal(${professor.id}, '${professor.nome}')"
                                 title="Adicionar Moedas">
@@ -542,6 +547,120 @@ class ProfessoresManager {
             .map(row => row.map(field => `"${field}"`).join(','))
             .join('\n');
     }
+
+    async showExtrato(id) {
+        // 1. Busca o professor na lista local para pegar o nome
+        const professor = this.professores.find(p => p.id === id);
+        if (!professor) {
+            appUtils.showError('Professor não encontrado.');
+            return;
+        }
+            
+        const usuarioIdParaExtrato = professor.usuarioId;
+        
+        if (!usuarioIdParaExtrato) {
+            appUtils.showError('Erro: ID de usuário não encontrado para este professor.');
+            return;
+        }
+
+        // 2. Pega os elementos do modal
+        const modalElement = document.getElementById('extratoModal');
+        const modalTitle = document.getElementById('extratoModalTitle');
+        const modalBody = document.getElementById('extratoModalBody');
+        const modal = new bootstrap.Modal(modalElement);
+
+        // 3. Define o título e o estado de "carregando"
+        modalTitle.textContent = `Extrato de ${professor.nome}`;
+        modalBody.innerHTML = `
+            <div class="text-center p-3">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p class="mt-2">Buscando transações...</p>
+            </div>
+        `;
+        
+        // 4. Mostra o modal
+        modal.show();
+
+        try {
+            // 5. Busca as transações
+            const transacoes = await appUtils.httpClient.get(`/transacoes/extrato/usuario/${usuarioIdParaExtrato}`);
+            
+            // 6. Renderiza os dados no corpo do modal
+            if (transacoes.length === 0) {
+                modalBody.innerHTML = '<p class="text-center">Nenhuma transação encontrada para este professor.</p>';
+                return;
+            }
+
+            // 7. Cria a tabela de extrato
+            let tableHTML = `
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Descrição</th>
+                            <th class="text-end">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // 8. Loop para preencher a tabela 
+            transacoes.forEach(tx => {
+                const dataFormatada = new Date(tx.dataTransacao).toLocaleString('pt-BR', {
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit'
+                }); 
+
+                let valorClasse = '';
+                let valorFormatado = '';
+                let tipoBadge = '';
+                let descricaoFinal = '';
+
+                const isEnvio = tx.destinatarioNome; 
+                const isResgate = tx.vantagemNome;
+
+                if (isEnvio) {
+
+                    tipoBadge = '<span class="badge bg-danger">Envio</span>';
+                    descricaoFinal = `Para: ${tx.destinatarioNome}`;
+                    valorClasse = 'text-danger';
+                    valorFormatado = `-${tx.valor}`;
+
+                } else if (isResgate) {
+                    tipoBadge = '<span class="badge bg-success">Resgate</span>';
+                    descricaoFinal = tx.vantagemNome + (tx.empresaNome ? ` (${tx.empresaNome})` : '');
+                    valorClasse = 'text-danger';
+                    valorFormatado = `-${tx.valor}`;
+
+                } else {
+                    tipoBadge = '<span class="badge bg-primary">Recebimento</span>';
+                    descricaoFinal = tx.remetenteNome ? `De: ${tx.remetenteNome}` : (tx.descricao || 'Bônus/Crédito');
+                    valorClasse = 'text-success';
+                    valorFormatado = `+${tx.valor}`;
+                }
+
+                tableHTML += `
+                    <tr>
+                        <td>${dataFormatada}</td>
+                        <td>${tipoBadge}</td>
+                        <td>${descricaoFinal}</td>
+                        <td class="text-end ${valorClasse}"><strong>${valorFormatado}</strong></td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += '</tbody></table>';
+            modalBody.innerHTML = tableHTML;
+
+        } catch (error) {
+            modalBody.innerHTML = `<p class="text-danger text-center">Erro ao carregar o extrato: ${error.message}</p>`;
+            appUtils.showError('Erro ao buscar extrato: ' + error.message);
+        }
+    }
 }
 
 // Initialize professores manager when page loads
@@ -551,3 +670,4 @@ document.addEventListener('DOMContentLoaded', () => {
         professoresManager = new ProfessoresManager();
     }
 });
+
