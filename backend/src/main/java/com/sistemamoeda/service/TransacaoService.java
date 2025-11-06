@@ -1,5 +1,6 @@
 package com.sistemamoeda.service;
 
+import com.sistemamoeda.service.EmailService;
 import com.sistemamoeda.dto.TransacaoRequestDTO;
 import com.sistemamoeda.dto.TransacaoResponseDTO;
 import com.sistemamoeda.dto.ResgateVantagemRequestDTO;
@@ -7,14 +8,17 @@ import com.sistemamoeda.model.*;
 import com.sistemamoeda.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +30,12 @@ public class TransacaoService {
     private final AlunoRepository alunoRepository;
     private final VantagemRepository vantagemRepository;
     private final UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private EmailService emailService;;
     
+
+
     // Enviar moedas (Professor -> Aluno)
     public TransacaoResponseDTO enviarMoedas(TransacaoRequestDTO request) {
         // Buscar professor
@@ -71,7 +80,41 @@ public class TransacaoService {
         
         transacao = transacaoRepository.save(transacao);
         
-        // TODO: Enviar email para o aluno notificando o recebimento de moedas
+        // Envio de e-mails automáticos de confirmação
+try {
+    String emailProfessor = professor.getUsuario().getEmail();
+    String emailAluno = aluno.getUsuario().getEmail();
+    String nomeProfessor = professor.getUsuario().getNome();
+    String nomeAluno = aluno.getUsuario().getNome();
+    double valor = transacao.getValor().doubleValue();
+
+    // Mensagem para o professor
+    String msgProfessor = String.format(
+        "Você acabou de enviar %.2f moedas ao aluno %s.",
+        valor, nomeAluno
+    );
+    emailService.enviarEmailSimples(
+        emailProfessor,
+        "Confirmação de envio de moedas",
+        msgProfessor
+    );
+
+    // Mensagem para o aluno
+    String msgAluno = String.format(
+        "Você acabou de receber %.2f moedas enviadas pelo professor %s.",
+        valor, nomeProfessor
+    );
+    emailService.enviarEmailSimples(
+        emailAluno,
+        "Você recebeu novas moedas!",
+        msgAluno
+    );
+
+    System.out.println("📧 E-mails de confirmação enviados com sucesso!");
+} catch (Exception e) {
+    System.err.println("⚠️ Falha ao enviar e-mails de confirmação: " + e.getMessage());
+}
+
         
         return convertToResponseDTO(transacao);
     }
@@ -287,4 +330,7 @@ public class TransacaoService {
         
         return dto;
     }
+
+
+
 }
