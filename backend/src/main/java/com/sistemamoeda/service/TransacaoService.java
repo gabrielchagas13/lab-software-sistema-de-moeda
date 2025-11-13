@@ -32,7 +32,7 @@ public class TransacaoService {
     private final UsuarioRepository usuarioRepository;
 
     @Autowired
-    private EmailService emailService;;
+    private EmailService emailService;
     
 
 
@@ -104,7 +104,8 @@ try {
         "Você acabou de receber %.2f moedas enviadas pelo professor %s.",
         valor, nomeProfessor
     );
-    emailService.enviarEmailSimples(
+    // Envia e-mail HTML com GIF aleatório para o aluno
+    emailService.enviarEmailHtmlComGif(
         emailAluno,
         "Você recebeu novas moedas!",
         msgAluno
@@ -158,8 +159,29 @@ try {
         
         transacao = transacaoRepository.save(transacao);
         
-        // TODO: Enviar email para o aluno com o cupom
-        // TODO: Enviar email para a empresa notificando o resgate
+        // Enviar email para o aluno com o cupom e notificar a empresa
+        try {
+            String emailAluno = aluno.getUsuario().getEmail();
+            String nomeAluno = aluno.getUsuario().getNome();
+            String assuntoAluno = "Seu cupom: " + codigoCupom;
+            String mensagemAluno = String.format("Olá %s,\n\nObrigado por resgatar a vantagem '%s'.\nSeu código do cupom é: %s\nApresente este código na empresa para resgatar sua vantagem.\n\nAtenciosamente,\nSistema de Moeda",
+                    nomeAluno, vantagem.getNome(), codigoCupom);
+
+            emailService.enviarEmailSimples(emailAluno, assuntoAluno, mensagemAluno);
+
+            // Notificar empresa
+            if (vantagem.getEmpresa() != null && vantagem.getEmpresa().getUsuario() != null) {
+                String emailEmpresa = vantagem.getEmpresa().getUsuario().getEmail();
+                String nomeEmpresa = vantagem.getEmpresa().getNomeFantasia();
+                String assuntoEmpresa = "Novo resgate da vantagem: " + vantagem.getNome();
+                String mensagemEmpresa = String.format("Olá %s,\n\nO aluno %s resgatou a vantagem '%s'.\nCódigo do cupom: %s\n\nAtenciosamente,\nSistema de Moeda",
+                        nomeEmpresa, nomeAluno, vantagem.getNome(), codigoCupom);
+
+                emailService.enviarEmailSimples(emailEmpresa, assuntoEmpresa, mensagemEmpresa);
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Falha ao enviar emails de resgate: " + e.getMessage());
+        }
         
         return convertToResponseDTO(transacao);
     }
@@ -262,6 +284,66 @@ try {
                 .stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    // Transferir/ trocar uma vantagem (cupom) entre alunos
+    public TransacaoResponseDTO transferirVantagem(com.sistemamoeda.dto.TransferirVantagemRequestDTO request) {
+        // Buscar transação original pelo código do cupom
+        Transacao original = transacaoRepository.findByCodigoCupom(request.getCodigoCupom())
+                .orElseThrow(() -> new EntityNotFoundException("Cupom não encontrado"));
+
+        if (original.getVantagem() == null) {
+            throw new IllegalArgumentException("Transação não corresponde a um resgate de vantagem");
+        }
+
+
+        // Buscar alunos envolvidos e extrair seus usuarios
+        Aluno remetenteAluno = alunoRepository.findById(request.getRemetenteId())
+            .orElseThrow(() -> new EntityNotFoundException("Remetente (aluno) não encontrado"));
+        Aluno destinatarioAluno = alunoRepository.findById(request.getDestinatarioId())
+            .orElseThrow(() -> new EntityNotFoundException("Destinatário (aluno) não encontrado"));
+
+        Usuario remetente = remetenteAluno.getUsuario();
+        Usuario destinatario = destinatarioAluno.getUsuario();
+
+        // Validar proprietário atual do cupom (deve ser o remetente informado)
+        if (original.getDestinatario() == null || !original.getDestinatario().getId().equals(remetente.getId())) {
+            throw new IllegalArgumentException("O remetente informado não é o proprietário atual do cupom");
+        }
+
+        // Criar transação de troca
+        Transacao troca = new Transacao();
+        troca.setTipoTransacao(com.sistemamoeda.model.TipoTransacao.TROCA_VANTAGEM);
+        troca.setValor(java.math.BigDecimal.ZERO);
+        troca.setDescricao("Transferência de cupom: " + original.getCodigoCupom());
+        troca.setRemetente(remetente);
+        troca.setDestinatario(destinatario);
+        troca.setVantagem(original.getVantagem());
+        troca.setCodigoCupom(original.getCodigoCupom());
+
+        troca = transacaoRepository.save(troca);
+
+        // Enviar notificações por email (novo proprietário + empresa)
+        try {
+            String emailDest = destinatario.getEmail();
+            String nomeDest = destinatario.getNome();
+            String assunto = "Você recebeu um cupom transferido: " + troca.getCodigoCupom();
+            String mensagem = String.format("Olá %s,\n\nVocê recebeu o cupom %s transferido por %s para a vantagem '%s'.\nApresente o código para resgatar a vantagem.\n\nAtenciosamente,\nSistema de Moeda",
+                    nomeDest, troca.getCodigoCupom(), remetente.getNome(), troca.getVantagem().getNome());
+
+            emailService.enviarEmailSimples(emailDest, assunto, mensagem);
+
+            if (troca.getVantagem().getEmpresa() != null && troca.getVantagem().getEmpresa().getUsuario() != null) {
+                String emailEmpresa = troca.getVantagem().getEmpresa().getUsuario().getEmail();
+                String mensagemEmpresa = String.format("Olá,\n\nO cupom %s da vantagem '%s' foi transferido do aluno %s para %s.\n\nAtenciosamente,\nSistema de Moeda",
+                        troca.getCodigoCupom(), troca.getVantagem().getNome(), remetente.getNome(), nomeDest);
+                emailService.enviarEmailSimples(emailEmpresa, "Cupom transferido", mensagemEmpresa);
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Falha ao enviar emails sobre transferência: " + e.getMessage());
+        }
+
+        return convertToResponseDTO(troca);
     }
     
     // Estatísticas - total de moedas enviadas por professor
