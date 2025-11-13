@@ -66,6 +66,21 @@ public class TransacaoController {
                     .body("Erro ao adicionar crédito semestral: " + e.getMessage());
         }
     }
+
+    // Transferir vantagem (cupom) entre alunos
+    @PostMapping("/transferir-vantagem")
+    public ResponseEntity<?> transferirVantagem(@Valid @RequestBody com.sistemamoeda.dto.TransferirVantagemRequestDTO request) {
+        try {
+            TransacaoResponseDTO transacao = transacaoService.transferirVantagem(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(transacao);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Erro de validação: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno do servidor: " + e.getMessage());
+        }
+    }
     
     // Listar todas as transações
     @GetMapping
