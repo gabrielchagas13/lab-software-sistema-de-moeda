@@ -8,6 +8,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +29,7 @@ public class EmailService {
      * @param assunto      Assunto do e-mail
      * @param mensagem     Corpo do e-mail
      */
+    @Async
     public void enviarEmailSimples(String destinatario, String assunto, String mensagem) {
         try {
             SimpleMailMessage email = new SimpleMailMessage();
@@ -45,6 +47,7 @@ public class EmailService {
      * Envia um e-mail HTML contendo a mensagem e um GIF aleatório.
      * O GIF é referenciado por URL (externo).
      */
+    @Async
     public void enviarEmailHtmlComGif(String destinatario, String assunto, String mensagem) {
         List<String> gifs = Arrays.asList(
                 "https://media.giphy.com/media/3o6Zt6ML6BklcajjsA/giphy.gif",
@@ -75,6 +78,7 @@ public class EmailService {
     }
 
     // Pequena utilidade para escapar caracteres HTML básicos (evita injeção simples)
+    @Async
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
@@ -87,6 +91,7 @@ public class EmailService {
     /**
      * Compatibilidade: alias para {@link #enviarEmailSimples(String, String, String)}.
      */
+    @Async
     public void sendSimpleEmail(String to, String subject, String text) {
         enviarEmailSimples(to, subject, text);
     }

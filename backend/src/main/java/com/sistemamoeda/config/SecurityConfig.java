@@ -55,32 +55,32 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource))
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        
+        .authorizeHttpRequests(auth -> auth
             
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .requestMatchers("/api/auth/**", "/api/h2-console/**").permitAll() 
+            .requestMatchers(HttpMethod.GET, "/api/instituicoes").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/alunos", "/api/professores", "/api/empresas").permitAll()
             
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/instituicoes/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/alunos", "/api/professores", "/api/empresas").permitAll()
+            .requestMatchers("/api/alunos/**").hasAnyRole("ALUNO", "ADMIN")
+            .requestMatchers("/api/professores/**").hasAnyRole("PROFESSOR", "ADMIN")
+            .requestMatchers("/api/empresas/**").hasAnyRole("EMPRESA","ALUNO", "ADMIN")
+            .requestMatchers("/api/vantagens/**").hasAnyRole("EMPRESA", "ALUNO", "ADMIN")
+            .requestMatchers("/api/transacoes/**").hasAnyRole("PROFESSOR", "ALUNO" ,"ADMIN") 
 
-                .requestMatchers("/api/**").hasRole("ADMIN")
+            .anyRequest().authenticated()
+        )
+        .authenticationProvider(authenticationProvider()) 
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+        
+        .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // H2
 
-                .requestMatchers("/api/alunos/**").hasRole("ALUNO")
-                .requestMatchers("/api/professores/**").hasRole("PROFESSOR")
-                .requestMatchers("/api/empresas/**").hasRole("EMPRESA")
-                
-                .anyRequest().authenticated() 
-            ).authenticationProvider(authenticationProvider()) 
-                        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // H2
-
-        return http.build();
-    }
+    return http.build();
+}
 }

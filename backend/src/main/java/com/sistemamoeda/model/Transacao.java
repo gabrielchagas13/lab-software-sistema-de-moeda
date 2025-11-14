@@ -28,7 +28,7 @@ public class Transacao {
     private TipoTransacao tipoTransacao;
     
     @NotNull(message = "Valor é obrigatório")
-    @DecimalMin(value = "0.01", message = "Valor deve ser maior que zero")
+    @DecimalMin(value = "0.00", message = "Valor deve ser maior que zero")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
     

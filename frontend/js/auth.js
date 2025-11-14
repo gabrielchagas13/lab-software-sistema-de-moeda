@@ -92,11 +92,33 @@ function buildSidebar(role, rootPrefix, pagesPrefix) { // <-- MUDANÇA
         // --- FIM DA CORREÇÃO DE CAMINHO ---
     } 
     
-    // else if (role === 'ALUNO') { ... }
+    else if (role === 'ALUNO') {
+         navHTML = 
+            createNavLink(`${rootPrefix}index.html`, "fa-home", "Dashboard") +
+            createNavLink(`${pagesPrefix}vantagens_aluno.html`, "fa-gift", "Catálogo") +
+            createNavLink(`${pagesPrefix}transacoes.html`, "fa-exchange-alt", "Meu Extrato") +
+            createNavLink(`${pagesPrefix}sobre.html`, "fa-info-circle", "Sobre");
+    }
     
+    // LÓGICA DO PROFESSOR (Enviar moedas)
+    else if (role === 'PROFESSOR') {
+         navHTML = 
+            createNavLink(`${rootPrefix}index.html`, "fa-home", "Dashboard") +
+            createNavLink(`${pagesPrefix}alunos.html`, "fa-user-graduate", "Gerenciar Alunos") +
+            createNavLink(`${pagesPrefix}transacoes.html`, "fa-exchange-alt", "Transferências") +
+            createNavLink(`${pagesPrefix}sobre.html`, "fa-info-circle", "Sobre");
+    }
+    
+    // LÓGICA DA EMPRESA (Gerenciar Vantagens)
+    else if (role === 'EMPRESA') {
+         navHTML = 
+            createNavLink(`${rootPrefix}index.html`, "fa-home", "Dashboard") +
+            createNavLink(`${pagesPrefix}vantagens.html`, "fa-gift", "Gerenciar Vantagens") +
+            createNavLink(`${pagesPrefix}sobre.html`, "fa-info-circle", "Sobre");
+    }
+
     else {
         navHTML = createNavLink(`${rootPrefix}index.html`, "fa-home", "Dashboard");
     }
-
     navContainer.innerHTML = navHTML;
 }
