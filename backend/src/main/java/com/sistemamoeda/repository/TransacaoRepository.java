@@ -18,6 +18,8 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Long> {
     
     // Buscar por código do cupom
     Optional<Transacao> findByCodigoCupom(String codigoCupom);
+
+    Optional<Transacao> findTopByCodigoCupomOrderByDataTransacaoDesc(String codigoCupom);
     
     // Buscar por tipo de transação
     List<Transacao> findByTipoTransacao(TipoTransacao tipoTransacao);

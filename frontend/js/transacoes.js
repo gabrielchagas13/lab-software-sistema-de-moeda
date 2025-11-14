@@ -18,7 +18,6 @@ class TransacoesManager {
 
     async loadData() {
         try {
-            // Load resources one-by-one so a single failure doesn't abort everything
             await this.loadTransacoes().catch(e => console.warn('[transacoes] loadTransacoes failed', e));
             await this.loadProfessores().catch(e => console.warn('[transacoes] loadProfessores failed', e));
             await this.loadAlunos().catch(e => console.warn('[transacoes] loadAlunos failed', e));
@@ -28,7 +27,11 @@ class TransacoesManager {
             this.populateSelects();
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
-            showToast('Erro ao carregar dados do sistema', 'error');
+            if (window.Swal) {
+                Swal.fire('Erro', 'Erro ao carregar dados do sistema: ' + error.message, 'error');
+            } else {
+                alert('Erro ao carregar dados do sistema: ' + error.message);
+            }
         }
     }
 
@@ -43,7 +46,6 @@ class TransacoesManager {
     async loadProfessores() {
         try {
             this.professores = await appUtils.httpClient.get('/professores');
-            console.log('[transacoes] professores carregados:', this.professores.length);
         } catch (error) {
             console.error('Erro ao carregar professores:', error);
             this.professores = [];
@@ -53,7 +55,6 @@ class TransacoesManager {
     async loadAlunos() {
         try {
             this.alunos = await appUtils.httpClient.get('/alunos');
-            console.log('[transacoes] alunos carregados:', this.alunos.length);
         } catch (error) {
             console.error('Erro ao carregar alunos:', error);
             this.alunos = [];
@@ -63,63 +64,42 @@ class TransacoesManager {
     async loadVantagens() {
         try {
             this.vantagens = await appUtils.httpClient.get('/vantagens');
-            console.log('[transacoes] vantagens carregadas:', Array.isArray(this.vantagens) ? this.vantagens.length : typeof this.vantagens, this.vantagens && this.vantagens.slice ? this.vantagens.slice(0,5) : this.vantagens);
         } catch (error) {
             console.error('Erro ao carregar vantagens:', error);
         }
     }
 
     populateSelects() {
-        // Debug info
-        console.log('[transacoes] populateSelects - professores:', this.professores ? this.professores.length : 0, 'alunos:', this.alunos ? this.alunos.length : 0);
-
-        // Populate professores select
         const professorSelect = document.getElementById('professorId');
         if (professorSelect) {
             professorSelect.innerHTML = '<option value="">Selecione um professor</option>';
             if (!this.professores || this.professores.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Nenhum professor cadastrado';
-                option.disabled = true;
-                professorSelect.appendChild(option);
+                professorSelect.innerHTML += '<option value="" disabled>Nenhum professor cadastrado</option>';
             } else {
                 this.professores.forEach(professor => {
-                    const option = document.createElement('option');
-                    option.value = professor.id;
                     const saldo = (professor.saldoMoedas !== undefined && professor.saldoMoedas !== null) ? professor.saldoMoedas : 0;
-                    option.textContent = `${professor.nome} (${saldo} moedas)`;
-                    professorSelect.appendChild(option);
+                    professorSelect.innerHTML += `<option value="${professor.id}">${professor.nome} (${saldo} moedas)</option>`;
                 });
             }
         }
 
-        // Populate alunos selects
         const alunoSelects = ['alunoId', 'alunoResgateId'];
         alunoSelects.forEach(selectId => {
             const select = document.getElementById(selectId);
             if (!select) return;
             select.innerHTML = '<option value="">Selecione um aluno</option>';
             if (!this.alunos || this.alunos.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Nenhum aluno cadastrado';
-                option.disabled = true;
-                select.appendChild(option);
+                select.innerHTML += '<option value="" disabled>Nenhum aluno cadastrado</option>';
             } else {
                 this.alunos.forEach(aluno => {
-                    const option = document.createElement('option');
-                    option.value = aluno.id;
                     const saldo = (aluno.saldoMoedas !== undefined && aluno.saldoMoedas !== null) ? aluno.saldoMoedas : 0;
-                    option.textContent = `${aluno.nome} (${saldo} moedas)`;
-                    select.appendChild(option);
+                    select.innerHTML += `<option value="${aluno.id}">${aluno.nome} (${saldo} moedas)</option>`;
                 });
             }
         });
     }
 
     attachEventListeners() {
-        // Modal buttons
         const enviarMoedasBtn = document.getElementById('enviarMoedasBtn');
         if (enviarMoedasBtn) {
             enviarMoedasBtn.addEventListener('click', () => this.showEnviarMoedasModal());
@@ -130,7 +110,6 @@ class TransacoesManager {
             resgatarVantagemBtn.addEventListener('click', () => this.showResgatarVantagemModal());
         }
 
-        // Forms
         const enviarMoedasForm = document.getElementById('enviarMoedasForm');
         if (enviarMoedasForm) {
             enviarMoedasForm.addEventListener('submit', (e) => {
@@ -139,11 +118,9 @@ class TransacoesManager {
             });
         }
 
-        // Fallback: also attach directly to the confirm button in case form submit isn't fired
         const confirmarEnvioBtn = document.getElementById('confirmarEnvioBtn');
         if (confirmarEnvioBtn) {
             confirmarEnvioBtn.addEventListener('click', (e) => {
-                // if button is type=submit the form handler will run, but call explicitly as fallback
                 e.preventDefault();
                 this.handleEnviarMoedas();
             });
@@ -154,7 +131,6 @@ class TransacoesManager {
             confirmarResgateBtn.addEventListener('click', () => this.handleResgatarVantagem());
         }
 
-        // Filters
         const tipoFilterEl = document.getElementById('tipoFilter');
         if (tipoFilterEl) {
             tipoFilterEl.addEventListener('change', (e) => {
@@ -163,7 +139,6 @@ class TransacoesManager {
             });
         }
 
-        // Filter buttons
         const filterBtns = document.querySelectorAll('[data-filter]');
         if (filterBtns && filterBtns.length) {
             filterBtns.forEach(btn => {
@@ -176,7 +151,6 @@ class TransacoesManager {
             });
         }
 
-        // Aluno change for resgate
         const alunoResgateEl = document.getElementById('alunoResgateId');
         if (alunoResgateEl) {
             alunoResgateEl.addEventListener('change', () => this.loadVantagensDisponiveis());
@@ -198,38 +172,31 @@ class TransacoesManager {
         const confirmarBtn = document.getElementById('confirmarResgateBtn');
         if (confirmarBtn) confirmarBtn.disabled = true;
 
-        // Show loading placeholder while we fetch vantagens for the currently selected aluno
         const container = document.getElementById('vantagensDisponiveis');
         if (container) container.innerHTML = '<div class="col-12"><p class="text-muted">Carregando vantagens...</p></div>';
 
         modal.show();
 
-        // After modal is shown, ensure alunos are loaded and then populate vantagens based on selected aluno
         setTimeout(() => {
-            // If aluno selection exists in modal, trigger loading
             const alunoSelect = document.getElementById('alunoResgateId');
             const alunoId = alunoSelect ? alunoSelect.value : null;
             if (!alunoId) {
                 if (container) container.innerHTML = '<div class="col-12"><p class="text-muted">Selecione um aluno primeiro</p></div>';
                 return;
             }
-            // Ensure vantagens list is up-to-date by reloading from server
             this.loadVantagens().then(() => {
                 try {
                     this.loadVantagensDisponiveis();
                 } catch (err) {
-                    console.error('Erro ao popular vantagens no modal:', err);
                     if (container) container.innerHTML = '<div class="col-12"><p class="text-muted">Erro ao carregar vantagens</p></div>';
                 }
             }).catch(err => {
-                console.error('Erro ao recarregar vantagens:', err);
                 if (container) container.innerHTML = '<div class="col-12"><p class="text-muted">Erro ao carregar vantagens</p></div>';
             });
         }, 150);
     }
 
     async handleEnviarMoedas() {
-        // Backend espera: remetenteId, destinatarioId, valor (BigDecimal), descricao
         const remetenteId = parseInt(document.getElementById('professorId').value) || null;
         const destinatarioId = parseInt(document.getElementById('alunoId').value) || null;
         const valorInput = document.getElementById('valorMoedas').value;
@@ -241,15 +208,28 @@ class TransacoesManager {
             valor: valorInput ? Number(valorInput) : null,
             descricao: descricao.trim()
         };
+        
+        // MUDANÇA: Adiciona SweetAlert de Loading
+        Swal.fire({
+            title: 'Processando Envio',
+            text: 'Enviando moedas e disparando e-mails...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
 
         try {
             await appUtils.httpClient.post('/transacoes/enviar-moedas', formData);
-            showToast('Moedas enviadas com sucesso!', 'success');
+            
+            Swal.close(); // Fecha o loading
+            Swal.fire('Sucesso!', 'Moedas enviadas com sucesso!', 'success');
+            
             bootstrap.Modal.getInstance(document.getElementById('enviarMoedasModal')).hide();
             this.loadData();
         } catch (error) {
-            console.error('Erro ao enviar moedas:', error);
-            showToast('Erro ao enviar moedas: ' + error.message, 'error');
+            Swal.close(); // Fecha o loading
+            Swal.fire('Erro!', 'Erro ao enviar moedas: ' + error.message, 'error');
         }
     }
 
@@ -275,9 +255,7 @@ class TransacoesManager {
         }
 
         const vantagensList = Array.isArray(this.vantagens) ? this.vantagens : [];
-    console.log('[transacoes] aluno saldo:', aluno.saldoMoedas, 'vantagens total:', vantagensList.length);
-    const vantagensAcessiveis = vantagensList.filter(v => (v.ativa === true || v.ativo === true) && (v.custoMoedas || v.custo || 0) <= (aluno.saldoMoedas || 0));
-    console.log('[transacoes] vantagens acessiveis para aluno', aluno.id, vantagensAcessiveis.length, vantagensAcessiveis.map(v=>({id:v.id,nome:v.nome,custo:v.custoMoedas,ativa:v.ativa})));
+        const vantagensAcessiveis = vantagensList.filter(v => (v.ativa === true || v.ativo === true) && (v.custoMoedas || v.custo || 0) <= (aluno.saldoMoedas || 0));
 
         if (vantagensAcessiveis.length === 0) {
             container.innerHTML = '<div class="col-12"><p class="text-muted">Nenhuma vantagem disponível para este aluno</p></div>';
@@ -298,11 +276,9 @@ class TransacoesManager {
             </div>
         `).join('');
 
-        // reset selection and disable confirm until user selects
         this.vantagemSelecionada = null;
         if (confirmarBtn) confirmarBtn.disabled = true;
 
-        // Add click handlers to vantagem cards
         container.querySelectorAll('.vantagem-card').forEach(card => {
             card.addEventListener('click', () => {
                 container.querySelectorAll('.vantagem-card').forEach(c => c.classList.remove('border-success'));
@@ -315,7 +291,7 @@ class TransacoesManager {
 
     async handleResgatarVantagem() {
         if (!this.vantagemSelecionada) {
-            showToast('Selecione uma vantagem', 'warning');
+            Swal.fire('Atenção', 'Selecione uma vantagem', 'warning');
             return;
         }
 
@@ -324,14 +300,31 @@ class TransacoesManager {
             vantagemId: this.vantagemSelecionada
         };
 
+        // MUDANÇA: Adiciona SweetAlert de Loading
+        Swal.fire({
+            title: 'Processando Resgate',
+            text: 'Registrando seu cupom e enviando e-mails...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         try {
             const resultado = await appUtils.httpClient.post('/transacoes/resgatar-vantagem', formData);
-            showToast(`Vantagem resgatada! Cupom: ${resultado.cupomCodigo}`, 'success');
+            
+            Swal.close(); // Fecha o loading
+            Swal.fire(
+                'Vantagem Resgatada!',
+                `Cupom: ${resultado.cupomCodigo}`,
+                'success'
+            );
+            
             bootstrap.Modal.getInstance(document.getElementById('resgatarVantagemModal')).hide();
             this.loadData();
         } catch (error) {
-            console.error('Erro ao resgatar vantagem:', error);
-            showToast('Erro ao resgatar vantagem: ' + error.message, 'error');
+            Swal.close(); // Fecha o loading
+            Swal.fire('Erro!', 'Erro ao resgatar vantagem: ' + error.message, 'error');
         }
     }
 
@@ -339,12 +332,10 @@ class TransacoesManager {
         const tbody = document.getElementById('transacoesTableBody');
         let transacoesFiltradas = this.transacoes;
 
-        // Apply tipo filter (support novo campo tipoTransacao e legado tipo)
         if (this.tipoFilter) {
             transacoesFiltradas = transacoesFiltradas.filter(t => (t.tipoTransacao || t.tipo) === this.tipoFilter);
         }
 
-        // Apply action filter
         switch (this.filtroAtivo) {
             case 'recent':
                 const umDiaAtras = new Date();
@@ -373,7 +364,6 @@ class TransacoesManager {
         }
 
         tbody.innerHTML = transacoesFiltradas.map(transacao => {
-            // Use DTO fields from backend
             const data = transacao.dataTransacao ? appUtils.formatDate(transacao.dataTransacao) : '—';
             const tipo = transacao.tipoTransacao || transacao.tipo || 'UNKNOWN';
             const badgeClass = this.getTipoBadgeClass(tipo);
@@ -420,7 +410,6 @@ class TransacoesManager {
     }
 
     formatRemetente(transacao) {
-        // Prefer DTO fields
         if (transacao.remetenteNome) return transacao.remetenteNome;
         if (transacao.professorRemetente) return `Prof. ${transacao.professorRemetente.nome}`;
         return 'Sistema';
@@ -437,7 +426,6 @@ class TransacoesManager {
         const transacao = this.transacoes.find(t => t.id === transacaoId);
         if (!transacao) return;
 
-        // Create modal if not exists
         let modalEl = document.getElementById('transacaoDetailsModal');
         if (!modalEl) {
             modalEl = document.createElement('div');
@@ -507,7 +495,6 @@ class TransacoesManager {
     }
 }
 
-// Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
     window.transacoesManager = new TransacoesManager();
 });

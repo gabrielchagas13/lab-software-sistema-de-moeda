@@ -287,15 +287,16 @@ try {
     }
 
     // Transferir/ trocar uma vantagem (cupom) entre alunos
+// Transferir/ trocar uma vantagem (cupom) entre alunos
     public TransacaoResponseDTO transferirVantagem(com.sistemamoeda.dto.TransferirVantagemRequestDTO request) {
-        // Buscar transação original pelo código do cupom
-        Transacao original = transacaoRepository.findByCodigoCupom(request.getCodigoCupom())
+        
+        // MUDANÇA: Buscar a transação MAIS RECENTE do cupom, não a original
+        Transacao transacaoAtual = transacaoRepository.findTopByCodigoCupomOrderByDataTransacaoDesc(request.getCodigoCupom())
                 .orElseThrow(() -> new EntityNotFoundException("Cupom não encontrado"));
 
-        if (original.getVantagem() == null) {
+        if (transacaoAtual.getVantagem() == null) {
             throw new IllegalArgumentException("Transação não corresponde a um resgate de vantagem");
         }
-
 
         // Buscar alunos envolvidos e extrair seus usuarios
         Aluno remetenteAluno = alunoRepository.findById(request.getRemetenteId())
@@ -306,20 +307,20 @@ try {
         Usuario remetente = remetenteAluno.getUsuario();
         Usuario destinatario = destinatarioAluno.getUsuario();
 
-        // Validar proprietário atual do cupom (deve ser o remetente informado)
-        if (original.getDestinatario() == null || !original.getDestinatario().getId().equals(remetente.getId())) {
+        // MUDANÇA: Validar proprietário atual do cupom (deve ser o destinatário da ÚLTIMA transação)
+        if (transacaoAtual.getDestinatario() == null || !transacaoAtual.getDestinatario().getId().equals(remetente.getId())) {
             throw new IllegalArgumentException("O remetente informado não é o proprietário atual do cupom");
         }
 
         // Criar transação de troca
         Transacao troca = new Transacao();
         troca.setTipoTransacao(com.sistemamoeda.model.TipoTransacao.TROCA_VANTAGEM);
-        troca.setValor(java.math.BigDecimal.ZERO);
-        troca.setDescricao("Transferência de cupom: " + original.getCodigoCupom());
+        troca.setValor(java.math.BigDecimal.ZERO); // Valor é 0.00 para trocas
+        troca.setDescricao("Transferência de cupom: " + transacaoAtual.getCodigoCupom());
         troca.setRemetente(remetente);
         troca.setDestinatario(destinatario);
-        troca.setVantagem(original.getVantagem());
-        troca.setCodigoCupom(original.getCodigoCupom());
+        troca.setVantagem(transacaoAtual.getVantagem());
+        troca.setCodigoCupom(transacaoAtual.getCodigoCupom());
 
         troca = transacaoRepository.save(troca);
 

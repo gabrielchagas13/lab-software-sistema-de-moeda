@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Vantagens - Sistema de Moeda Estudantil</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+
+    <style>
+        body, .container-fluid, .row {
+            margin: 0;
+        }
+        main {
+            overflow-y: auto;
+            height: 100vh;
+        }
+        .sidebar {
+            height: 100vh;
+        }
+        .sidebar .position-sticky {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .sidebar .nav-link {
+            background-color: transparent !important;
+            padding: 0.85rem 1.5rem; 
+            font-size: 1.05rem;     
+        }
+        .sidebar .nav-link:hover {
+            background-color: #495057 !important; 
+        }
+        .sidebar .nav-link.active {
+            background-color: #0d6efd !important; 
+            font-weight: 500;
+        }
+        #sidebar-nav{
+            background-color: transparent !important;
+        }
+        .vantagem-card {
+            min-height: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .vantagem-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            
+            <nav class="col-md-3 col-lg-2 d-md-block bg-dark text-white sidebar collapse">
+                <div class="position-sticky pt-3 d-flex flex-column bg-dark h-100">
+                    <a href="../index.html" class="d-flex align-items-center justify-content-center text-white text-decoration-none my-3 mb-4">
+                        <i class="fas fa-coins fa-2x me-3"></i>
+                        <span class="fs-4">Moedas</span>
+                    </a>
+                    <ul class="nav flex-column" id="sidebar-nav">
+                        </ul>
+                    <div class="mt-auto p-3 border-top border-secondary">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-circle fa-2x text-white-50 me-2"></i>
+                            <div>
+                                <strong id="user-name" class="d-block text-light">Carregando...</strong>
+                                <small id="user-role" class="text-white-50">...</small>
+                            </div>
+                            <a href="#" id="logout-btn" class="ms-auto" title="Sair">
+                                <i class="fas fa-sign-out-alt fa-lg text-danger"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-gift me-2"></i>
+                        Catálogo de Vantagens
+                    </h1>
+                    <div class="alert alert-info py-1 px-3 mb-0">
+                        Seu saldo: <strong id="aluno-saldo">0.00</strong> moedas
+                    </div>
+                </div>
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nome da vantagem ou empresa...">
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="empresaFilter">
+                            <option value="">Todas as empresas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                                Todas
+                            </button>
+                            <button type="button" class="btn btn-outline-success" data-filter="acessiveis">
+                                Acessíveis
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" data-filter="mais-baratas">
+                                Mais Baratas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="vantagensGrid" class="row">
+                    </div>
+
+                <div id="loadingIndicator" class="text-center p-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2">Carregando catálogo...</p>
+                </div>
+
+                <!-- 
+                  MUDANÇA: Nova seção "Meus Cupons"
+                -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 my-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-ticket-alt me-2"></i>
+                        Meus Cupons Resgatados
+                    </h1>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Vantagem</th>
+                                        <th>Empresa</th>
+                                        <th>Cupom</th>
+                                        <th>Data Resgate</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="meusCuponsTableBody">
+                                    <!-- Cupons do aluno serão carregados aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Resgate Confirmation Modal (Sem mudanças) -->
+    <div class="modal fade" id="resgateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Confirmar Resgate</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Você está prestes a resgatar a vantagem:</p>
+                    <h4 class="mb-3" id="vantagem-nome-modal"></h4>
+                    <p class="text-muted">Custo: <strong id="vantagem-custo-modal" class="text-primary"></strong> moedas</p>
+                    <div id="alerta-saldo" class="alert alert-warning">
+                        Seu saldo atual é de <strong id="aluno-saldo-modal"></strong> moedas.
+                        <br>O resgate será realizado imediatamente.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="confirmarResgateBtn">
+                        <i class="fas fa-gift me-2"></i>Confirmar Resgate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 
+      MUDANÇA: Novo Modal para Transferência
+    -->
+    <div class="modal fade" id="transferirModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Transferir Cupom</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="cupom-info-modal">Transferindo vantagem...</p>
+                    <hr>
+                    <form id="transferirForm">
+                        <div class="mb-3">
+                            <label for="destinatarioSelect" class="form-label">Transferir para o Aluno:</label>
+                            <select id="destinatarioSelect" class="form-select" required>
+                                <option value="">Carregando alunos...</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmarTransferenciaBtn">
+                        <i class="fas fa-paper-plane me-2"></i>Confirmar Transferência
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/vantagens_aluno.js"></script>
+</body>
+</html>

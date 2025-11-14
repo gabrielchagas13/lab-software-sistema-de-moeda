@@ -81,6 +81,13 @@ public class AlunoService {
                 .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado"));
         return convertToResponseDTO(aluno);
     }
+
+    @Transactional(readOnly = true)
+    public AlunoResponseDTO buscarPorUsuarioId(Long usuarioId) {
+        Aluno aluno = alunoRepository.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado para o ID de usuário: " + usuarioId));
+        return convertToResponseDTO(aluno); 
+    }
     
     // Atualizar aluno
     public AlunoResponseDTO atualizarAluno(Long id, AlunoRequestDTO request) {

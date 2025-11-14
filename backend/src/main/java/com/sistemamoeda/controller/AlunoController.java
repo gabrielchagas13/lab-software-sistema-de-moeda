@@ -68,6 +68,17 @@ public class AlunoController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
     }
+
+    // ADICIONE ESTE ENDPOINT:
+    @GetMapping("/por-usuario/{usuarioId}")
+    public ResponseEntity<?> buscarPorUsuarioId(@PathVariable Long usuarioId) {
+        try {
+            AlunoResponseDTO aluno = alunoService.buscarPorUsuarioId(usuarioId);
+            return ResponseEntity.ok(aluno);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
     
     // Atualizar aluno
     @PutMapping("/{id}")
