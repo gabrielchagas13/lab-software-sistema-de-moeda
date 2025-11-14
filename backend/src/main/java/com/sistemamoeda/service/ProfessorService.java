@@ -13,6 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,6 +27,7 @@ public class ProfessorService {
     private final ProfessorRepository professorRepository;
     private final UsuarioRepository usuarioRepository;
     private final InstituicaoRepository instituicaoRepository;
+    private final PasswordEncoder passwordEncoder;
     
     // Criar novo professor
     public ProfessorResponseDTO criarProfessor(ProfessorRequestDTO request) {
@@ -43,7 +45,7 @@ public class ProfessorService {
         Usuario usuario = new Usuario(
             request.getNome().trim(),
             request.getEmail().trim(),
-            request.getSenha(),
+            passwordEncoder.encode(request.getSenha()),
             TipoUsuario.PROFESSOR
         );
         
@@ -109,7 +111,7 @@ public class ProfessorService {
         
         // Atualizar senha se fornecida
         if (request.getSenha() != null && !request.getSenha().trim().isEmpty()) {
-            usuario.setSenha(request.getSenha());
+            usuario.setSenha(passwordEncoder.encode(request.getSenha()));
         }
         
         // Buscar instituição se mudou

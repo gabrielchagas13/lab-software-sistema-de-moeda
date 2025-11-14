@@ -11,6 +11,7 @@ import com.sistemamoeda.repository.VantagemRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,29 +26,26 @@ public class EmpresaService {
     private final EmpresaRepository empresaRepository;
     private final UsuarioRepository usuarioRepository;
     private final VantagemRepository vantagemRepository;
+    private final PasswordEncoder passwordEncoder; // LINHA ADICIONADA
     
     // Criar nova empresa
     public EmpresaResponseDTO criarEmpresa(EmpresaRequestDTO request) {
-        // Verificar se email já existe
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             throw new DataIntegrityViolationException("Email já cadastrado no sistema");
         }
         
-        // Verificar se CNPJ já existe
         if (empresaRepository.existsByCnpj(request.getCnpj())) {
             throw new DataIntegrityViolationException("CNPJ já cadastrado no sistema");
         }
         
-        // Criar usuário
         Usuario usuario = new Usuario(
                 request.getNome(),
                 request.getEmail(),
-                request.getSenha(), // TODO: Implementar hash da senha
+                passwordEncoder.encode(request.getSenha()),
                 TipoUsuario.EMPRESA
         );
         usuario = usuarioRepository.save(usuario);
         
-        // Criar empresa
         Empresa empresa = new Empresa(
                 usuario,
                 request.getNomeFantasia(),
@@ -83,28 +81,24 @@ public class EmpresaService {
         Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Empresa não encontrada"));
         
-        // Verificar se email já existe (diferente do atual)
         if (!empresa.getUsuario().getEmail().equals(request.getEmail()) && 
             usuarioRepository.existsByEmail(request.getEmail())) {
             throw new DataIntegrityViolationException("Email já cadastrado no sistema");
         }
         
-        // Verificar se CNPJ já existe (diferente do atual)
         if (!empresa.getCnpj().equals(request.getCnpj()) && 
             empresaRepository.existsByCnpj(request.getCnpj())) {
             throw new DataIntegrityViolationException("CNPJ já cadastrado no sistema");
         }
         
-        // Atualizar dados do usuário
         Usuario usuario = empresa.getUsuario();
         usuario.setNome(request.getNome());
         usuario.setEmail(request.getEmail());
         if (request.getSenha() != null && !request.getSenha().trim().isEmpty()) {
-            usuario.setSenha(request.getSenha()); // TODO: Implementar hash da senha
+            usuario.setSenha(passwordEncoder.encode(request.getSenha()));
         }
         usuarioRepository.save(usuario);
         
-        // Atualizar dados da empresa
         empresa.setNomeFantasia(request.getNomeFantasia());
         empresa.setCnpj(request.getCnpj());
         empresa.setEndereco(request.getEndereco());
@@ -120,7 +114,6 @@ public class EmpresaService {
         Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Empresa não encontrada"));
         
-        // Deletar empresa (vai deletar o usuário em cascata)
         empresaRepository.delete(empresa);
     }
     
@@ -168,7 +161,6 @@ public class EmpresaService {
         dto.setDescricao(empresa.getDescricao());
         dto.setDataCadastro(empresa.getDataCadastro());
         
-        // Contar vantagens
         Long quantidadeVantagens = vantagemRepository.countVantagensByEmpresaId(empresa.getId());
         dto.setQuantidadeVantagens(quantidadeVantagens);
         
