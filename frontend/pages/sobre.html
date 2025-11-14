@@ -8,64 +8,80 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="../css/styles.css">
+
+    <style>
+        body, .container-fluid, .row {
+            margin: 0;
+        }
+        main {
+            overflow-y: auto;
+            height: 100vh;
+        }
+        .sidebar {
+            height: 100vh;
+        }
+        .sidebar .position-sticky {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .sidebar .nav-link {
+            background-color: transparent !important;
+            padding: 0.85rem 1.5rem; 
+            font-size: 1.05rem;     
+        }
+        .sidebar .nav-link:hover {
+            background-color: #495057 !important; 
+        }
+        .sidebar .nav-link.active {
+            background-color: #0d6efd !important; 
+            font-weight: 500;
+        }
+        #sidebar-nav{
+            background-color: transparent !important;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>Sistema de Moedas</span>
-                    </h6>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="../index.html">
-                                <i class="fas fa-home"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="alunos.html">
-                                <i class="fas fa-user-graduate"></i>
-                                Alunos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="professores.html">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                                Professores
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="empresas.html">
-                                <i class="fas fa-building"></i>
-                                Empresas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="vantagens.html">
-                                <i class="fas fa-gift"></i>
-                                Vantagens
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="transacoes.html">
-                                <i class="fas fa-exchange-alt"></i>
-                                Transações
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="sobre.html">
-                                <i class="fas fa-info-circle"></i>
-                                Sobre
-                            </a>
-                        </li>
+            
+            <!-- 
+              MUDANÇA: A <nav> antiga (bg-light) foi substituída por esta.
+            -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-dark text-white sidebar collapse">
+                <div class="position-sticky pt-3 d-flex flex-column bg-dark h-100">
+                    
+                    <a href="../index.html" class="d-flex align-items-center justify-content-center text-white text-decoration-none my-3 mb-4">
+                        <i class="fas fa-coins fa-2x me-3"></i>
+                        <span class="fs-4">Moedas</span>
+                    </a>
+                    
+                    <ul class="nav flex-column" id="sidebar-nav">
+                        <!-- Links serão injetados aqui pelo js/auth.js -->
                     </ul>
+
+                    <div class="mt-auto p-3 border-top border-secondary">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-circle fa-2x text-white-50 me-2"></i>
+                            <div>
+                                <strong id="user-name" class="d-block text-light">Carregando...</strong>
+                                <small id="user-role" class="text-white-50">...</small>
+                            </div>
+                            <a href="#" id="logout-btn" class="ms-auto" title="Sair">
+                                <i class="fas fa-sign-out-alt fa-lg text-danger"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </nav>
 
+            <!-- 
+              Main content 
+              NENHUMA MUDANÇA AQUI. Seu conteúdo está 100% intacto.
+            -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div class="pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Sobre o Projeto</h1>
@@ -116,85 +132,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../js/main.js"></script>
-</body>
-</html>
-                <ul>
-                    <li>Formato de CPF (XXX.XXX.XXX-XX)</li>
-                    <li>Formato de CNPJ (XX.XXX.XXX/XXXX-XX)</li>
-                    <li>Formato de email válido</li>
-                    <li>Campos obrigatórios</li>
-                    <li>Unicidade de email, CPF e CNPJ</li>
-                    <li>Validação de senha (mínimo 6 caracteres)</li>
-                </ul>
-
-                <h3>Endpoints da API REST</h3>
-                
-                <h4>Alunos (/api/alunos):</h4>
-                <ul>
-                    <li>GET / - Listar todos</li>
-                    <li>GET /{id} - Buscar por ID</li>
-                    <li>POST / - Criar novo</li>
-                    <li>PUT /{id} - Atualizar</li>
-                    <li>DELETE /{id} - Excluir</li>
-                    <li>GET /nome?nome={nome} - Buscar por nome</li>
-                    <li>GET /instituicao/{id} - Buscar por instituição</li>
-                </ul>
-
-                <h4>Empresas (/api/empresas):</h4>
-                <ul>
-                    <li>GET / - Listar todas</li>
-                    <li>GET /{id} - Buscar por ID</li>
-                    <li>POST / - Criar nova</li>
-                    <li>PUT /{id} - Atualizar</li>
-                    <li>DELETE /{id} - Excluir</li>
-                    <li>GET /nome?nome={nome} - Buscar por nome</li>
-                    <li>GET /nome-fantasia?nomeFantasia={nome} - Buscar por nome fantasia</li>
-                </ul>
-
-                <h3>Banco de Dados</h3>
-                <p>O sistema suporta tanto MySQL (produção) quanto H2 (desenvolvimento):</p>
-                <ul>
-                    <li><strong>MySQL:</strong> Configurado para ambiente de produção</li>
-                    <li><strong>H2:</strong> Banco em memória para desenvolvimento e testes</li>
-                    <li><strong>Hibernate:</strong> DDL automático (create/update)</li>
-                    <li><strong>Indexação:</strong> Índices criados para otimização de consultas</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Como Executar o Sistema</h3>
-            </div>
-            <div class="card-content">
-                <h4>Pré-requisitos:</h4>
-                <ul>
-                    <li>Java 17+</li>
-                    <li>Maven 3.6+</li>
-                    <li>MySQL 8.0+ (opcional - pode usar H2)</li>
-                    <li>Navegador web moderno</li>
-                </ul>
-
-                <h4>Passos para execução:</h4>
-                <ol>
-                    <li>Clone o repositório</li>
-                    <li>Configure o banco de dados no <code>application.properties</code></li>
-                    <li>Execute: <code>mvn spring-boot:run</code> no diretório backend</li>
-                    <li>Abra o arquivo <code>frontend/index.html</code> no navegador</li>
-                    <li>Acesse as funcionalidades através do menu de navegação</li>
-                </ol>
-
-                <h4>URLs importantes:</h4>
-                <ul>
-                    <li><strong>Backend API:</strong> http://localhost:8080/api</li>
-                    <li><strong>H2 Console:</strong> http://localhost:8080/h2-console (se usando H2)</li>
-                    <li><strong>Frontend:</strong> Abrir index.html localmente</li>
-                </ul>
-            </div>
-        </div>
-    </main>
-
+    
+    <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>
 </body>
 </html>

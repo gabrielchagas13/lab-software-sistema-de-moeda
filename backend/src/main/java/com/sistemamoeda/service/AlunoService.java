@@ -3,7 +3,6 @@ package com.sistemamoeda.service;
 import com.sistemamoeda.dto.AlunoRequestDTO;
 import com.sistemamoeda.dto.AlunoResponseDTO;
 import com.sistemamoeda.model.*;
-import com.sistemamoeda.model.Instituicao;
 import com.sistemamoeda.repository.AlunoRepository;
 import com.sistemamoeda.repository.InstituicaoRepository;
 import com.sistemamoeda.repository.UsuarioRepository;
@@ -12,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,7 +24,8 @@ public class AlunoService {
     private final AlunoRepository alunoRepository;
     private final UsuarioRepository usuarioRepository;
     private final InstituicaoRepository instituicaoRepository;
-    
+    private final PasswordEncoder passwordEncoder;
+
     // Criar novo aluno
     public AlunoResponseDTO criarAluno(AlunoRequestDTO request) {
         // Verificar se email já existe
@@ -41,7 +42,7 @@ public class AlunoService {
         Usuario usuario = new Usuario(
                 request.getNome().trim(),
                 request.getEmail().trim(),
-                request.getSenha(), // TODO: Implementar hash da senha
+                passwordEncoder.encode(request.getSenha()),
                 TipoUsuario.ALUNO
         );
         usuario = usuarioRepository.save(usuario);
@@ -103,7 +104,7 @@ public class AlunoService {
         usuario.setNome(request.getNome());
         usuario.setEmail(request.getEmail());
         if (request.getSenha() != null && !request.getSenha().trim().isEmpty()) {
-            usuario.setSenha(request.getSenha()); // TODO: Implementar hash da senha
+            usuario.setSenha(passwordEncoder.encode(request.getSenha()));
         }
         usuarioRepository.save(usuario);
         

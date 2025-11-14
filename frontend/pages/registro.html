@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar - Sistema de Moeda Estudantil</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100 py-4">
+
+    <div class="col-12 col-md-8 col-lg-7 col-xl-6">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white text-center p-4">
+                <div>
+                    <i class="fas fa-user-plus fa-3x mb-3"></i> 
+                </div>
+                <h3 class="mb-0">Crie sua Conta</h3>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                
+                <form id="register-form" novalidate>
+                    
+                    <!-- 1. SELETOR DE TIPO DE USUÁRIO -->
+                    <div class="mb-4 text-center">
+                        <label class="form-label fs-5 fw-bold mb-3">Eu sou:</label>
+                        <div class="btn-group w-100" role="group" id="user-type-selector">
+                            <input type="radio" class="btn-check" name="userType" id="typeAluno" value="aluno" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary p-3" for="typeAluno">
+                                <i class="fas fa-user-graduate d-block mb-2 fs-4"></i>Aluno
+                            </label>
+
+                            <input type="radio" class="btn-check" name="userType" id="typeProfessor" value="professor" autocomplete="off">
+                            <label class="btn btn-outline-primary p-3" for="typeProfessor">
+                                <i class="fas fa-chalkboard-teacher d-block mb-2 fs-4"></i>Professor
+                            </label>
+
+                            <input type="radio" class="btn-check" name="userType" id="typeEmpresa" value="empresa" autocomplete="off">
+                            <label class="btn btn-outline-primary p-3" for="typeEmpresa">
+                                <i class="fas fa-building d-block mb-2 fs-4"></i>Empresa
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <hr class="mb-4">
+
+                    <!-- 2. CAMPOS COMUNS (Para todos os usuários) -->
+                    <h5 class="mb-3">Informações Básicas</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nome" class="form-label">Nome Completo (ou Razão Social) *</label>
+                            <input type="text" class="form-control" id="nome" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="senha" class="form-label">Senha *</label>
+                        <input type="password" class="form-control" id="senha" required minlength="6">
+                    </div>
+
+                    <hr class="mb-4">
+
+                    <!-- 3. CAMPOS DINÂMICOS (Mudam com o tipo de usuário) -->
+                    <div id="dynamic-fields">
+                        
+                        <!-- CAMPOS DE ALUNO (Visível por padrão) -->
+                        <div id="form-aluno-fields">
+                            <h5 class="mb-3">Informações de Aluno</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="alunoCpf" class="form-label">CPF *</label>
+                                    <input type="text" class="form-control" id="alunoCpf" placeholder="000.000.000-00" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="alunoRg" class="form-label">RG *</label>
+                                    <input type="text" class="form-control" id="alunoRg" placeholder="00.000.000-0" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="alunoInstituicaoId" class="form-label">Instituição *</label>
+                                <select class="form-select" id="alunoInstituicaoId" required>
+                                    <option value="">Carregando instituições...</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="alunoCurso" class="form-label">Curso *</label>
+                                <input type="text" class="form-control" id="alunoCurso" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="alunoEndereco" class="form-label">Endereço *</label>
+                                <input type="text" class="form-control" id="alunoEndereco" required>
+                            </div>
+                        </div>
+
+                        <!-- CAMPOS DE PROFESSOR (Oculto) -->
+                        <div id="form-professor-fields" class="d-none">
+                            <h5 class="mb-3">Informações de Professor</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="professorCpf" class="form-label">CPF *</label>
+                                    <input type="text" class="form-control" id="professorCpf" placeholder="000.000.000-00" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="professorDepartamento" class="form-label">Departamento *</label>
+                                    <input type="text" class="form-control" id="professorDepartamento" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="professorInstituicaoId" class="form-label">Instituição *</label>
+                                <select class="form-select" id="professorInstituicaoId" required>
+                                    <option value="">Carregando instituições...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- CAMPOS DE EMPRESA (Oculto) -->
+                        <div id="form-empresa-fields" class="d-none">
+                            <h5 class="mb-3">Informações da Empresa</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="empresaCnpj" class="form-label">CNPJ *</label>
+                                    <input type="text" class="form-control" id="empresaCnpj" placeholder="00.000.000/0000-00" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="empresaNomeFantasia" class="form-label">Nome Fantasia</label>
+                                    <input type="text" class="form-control" id="empresaNomeFantasia">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="empresaTelefone" class="form-label">Telefone</label>
+                                <input type="text" class="form-control" id="empresaTelefone" placeholder="(00) 00000-0000">
+                            </div>
+                             <div class="mb-3">
+                                <label for="empresaEndereco" class="form-label">Endereço *</label>
+                                <input type="text" class="form-control" id="empresaEndereco" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="empresaDescricao" class="form-label">Descrição</label>
+                                <textarea class="form-control" id="empresaDescricao" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botão de Registro -->
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Finalizar Cadastro
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+            <div class="card-footer text-center py-3">
+                <small class="text-muted">Já tem uma conta?
+                    <a href="login.html">Entre aqui</a>
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://unpkg.com/imask"></script>
+
+    <!-- Script de Registro -->
+    <script src="../js/registro.js"></script>
+</body>
+</html>
