@@ -64,17 +64,30 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         
         .authorizeHttpRequests(auth -> auth
             
-            .requestMatchers("/api/auth/**", "/api/h2-console/**").permitAll() 
-            .requestMatchers(HttpMethod.GET, "/api/instituicoes").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/alunos", "/api/professores", "/api/empresas").permitAll()
-            
-            .requestMatchers("/api/alunos/**").hasAnyRole("ALUNO", "ADMIN")
-            .requestMatchers("/api/professores/**").hasAnyRole("PROFESSOR", "ADMIN")
-            .requestMatchers("/api/empresas/**").hasAnyRole("EMPRESA","ALUNO", "ADMIN")
-            .requestMatchers("/api/vantagens/**").hasAnyRole("EMPRESA", "ALUNO", "ADMIN")
-            .requestMatchers("/api/transacoes/**").hasAnyRole("PROFESSOR", "ALUNO" ,"ADMIN") 
+                .requestMatchers("/api/auth/**", "/api/h2-console/**").permitAll() 
+                .requestMatchers(HttpMethod.GET, "/api/instituicoes").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/alunos", "/api/professores", "/api/empresas").permitAll()
 
-            .anyRequest().authenticated()
+
+                .requestMatchers(HttpMethod.GET, "/api/alunos/**").hasAnyRole("ALUNO", "PROFESSOR", "ADMIN")                
+                .requestMatchers(HttpMethod.GET, "/api/empresas/**").hasAnyRole("EMPRESA", "ALUNO", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/vantagens/**").hasAnyRole("EMPRESA", "ALUNO", "ADMIN")
+                
+                .requestMatchers(HttpMethod.GET, "/api/transacoes/**").hasAnyRole("PROFESSOR", "ALUNO", "ADMIN")
+
+                .requestMatchers(HttpMethod.POST, "/api/transacoes/enviar-moedas").hasAnyRole("PROFESSOR", "ADMIN")
+                
+
+                .requestMatchers(HttpMethod.POST, "/api/transacoes/resgatar-vantagem").hasAnyRole("ALUNO", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/transacoes/transferir-vantagem").hasAnyRole("ALUNO", "ADMIN")
+
+                .requestMatchers("/api/alunos/**").hasAnyRole("ALUNO", "ADMIN") 
+                .requestMatchers("/api/professores/**").hasAnyRole("PROFESSOR", "ADMIN")
+                .requestMatchers("/api/empresas/**").hasAnyRole("EMPRESA", "ADMIN")
+                .requestMatchers("/api/vantagens/**").hasAnyRole("EMPRESA", "ADMIN")
+                .requestMatchers("/api/**").hasRole("ADMIN")
+
+                .anyRequest().authenticated() 
         )
         .authenticationProvider(authenticationProvider()) 
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
