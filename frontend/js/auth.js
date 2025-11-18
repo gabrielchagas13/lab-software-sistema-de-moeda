@@ -96,16 +96,16 @@ function buildSidebar(role, rootPrefix, pagesPrefix) { // <-- MUDANÇA
          navHTML = 
             createNavLink(`${rootPrefix}index.html`, "fa-home", "Dashboard") +
             createNavLink(`${pagesPrefix}vantagens_aluno.html`, "fa-gift", "Catálogo") +
-            createNavLink(`${pagesPrefix}transacoes.html`, "fa-exchange-alt", "Meu Extrato") +
+            createNavLink(`${pagesPrefix}meu_extrato.html`, "fa-list-alt", "Meu Extrato") + 
             createNavLink(`${pagesPrefix}sobre.html`, "fa-info-circle", "Sobre");
     }
     
-    // LÓGICA DO PROFESSOR (Enviar moedas)
+    // LÓGICA DO PROFESSOR
     else if (role === 'PROFESSOR') {
          navHTML = 
             createNavLink(`${rootPrefix}index.html`, "fa-home", "Dashboard") +
-            createNavLink(`${pagesPrefix}alunos.html`, "fa-user-graduate", "Gerenciar Alunos") +
-            createNavLink(`${pagesPrefix}transacoes.html`, "fa-exchange-alt", "Transferências") +
+            createNavLink(`${pagesPrefix}enviar_moedas.html`, "fa-paper-plane", "Enviar Moedas") + 
+            createNavLink(`${pagesPrefix}meu_extrato.html`, "fa-list-alt", "Meu Extrato") +
             createNavLink(`${pagesPrefix}sobre.html`, "fa-info-circle", "Sobre");
     }
     
