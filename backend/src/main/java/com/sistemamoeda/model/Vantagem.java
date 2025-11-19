@@ -44,10 +44,10 @@ public class Vantagem {
     @Column(name = "custo_moedas", nullable = false, precision = 10, scale = 2)
     private BigDecimal custoMoedas;
     
-    @Size(max = 255, message = "URL da foto deve ter no máximo 255 caracteres")
-    @Column(name = "foto_url", length = 255)
-    private String fotoUrl;
-    
+    @Lob
+    @Column(name = "foto", columnDefinition = "LONGBLOB")
+    private byte[] foto;
+
     @Column(nullable = false)
     private Boolean ativa = true;
     
@@ -55,17 +55,15 @@ public class Vantagem {
     @Column(name = "data_criacao", nullable = false, updatable = false)
     private LocalDateTime dataCriacao;
     
-    // Construtor para criação
-    public Vantagem(Empresa empresa, String nome, String descricao, BigDecimal custoMoedas, String fotoUrl) {
+    public Vantagem(Empresa empresa, String nome, String descricao, BigDecimal custoMoedas, byte[] foto) {
         this.empresa = empresa;
         this.nome = nome;
         this.descricao = descricao;
         this.custoMoedas = custoMoedas;
-        this.fotoUrl = fotoUrl;
+        this.foto = foto;
         this.ativa = true;
     }
     
-    // Método de negócio
     public void ativar() {
         this.ativa = true;
     }
