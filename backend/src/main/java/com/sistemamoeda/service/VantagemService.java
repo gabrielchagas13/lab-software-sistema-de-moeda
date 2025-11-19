@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,17 +26,18 @@ public class VantagemService {
     
     // Criar nova vantagem
     public VantagemResponseDTO criarVantagem(VantagemRequestDTO request) {
-        // Verificar se empresa existe
         Empresa empresa = empresaRepository.findById(request.getEmpresaId())
                 .orElseThrow(() -> new EntityNotFoundException("Empresa não encontrada"));
         
-        // Criar vantagem
+        // Converter Base64 para byte[]
+        byte[] fotoBytes = converterBase64ParaBytes(request.getFotoUrl());
+
         Vantagem vantagem = new Vantagem(
             empresa,
             request.getNome().trim(),
             request.getDescricao().trim(),
             request.getCustoMoedas(),
-            request.getFotoUrl() != null ? request.getFotoUrl().trim() : null
+            fotoBytes
         );
         
         vantagem = vantagemRepository.save(vantagem);
@@ -43,7 +45,6 @@ public class VantagemService {
         return convertToResponseDTO(vantagem);
     }
     
-    // Buscar todas as vantagens
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> listarTodas() {
         return vantagemRepository.findAll()
@@ -52,7 +53,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar apenas vantagens ativas
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> listarAtivas() {
         return vantagemRepository.findByAtivaTrue()
@@ -61,7 +61,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar vantagem por ID
     @Transactional(readOnly = true)
     public VantagemResponseDTO buscarPorId(Long id) {
         Vantagem vantagem = vantagemRepository.findById(id)
@@ -75,25 +74,26 @@ public class VantagemService {
         Vantagem vantagem = vantagemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Vantagem não encontrada"));
         
-        // Verificar se empresa existe (se foi alterada)
         if (!vantagem.getEmpresa().getId().equals(request.getEmpresaId())) {
             Empresa empresa = empresaRepository.findById(request.getEmpresaId())
                     .orElseThrow(() -> new EntityNotFoundException("Empresa não encontrada"));
             vantagem.setEmpresa(empresa);
         }
         
-        // Atualizar dados da vantagem
         vantagem.setNome(request.getNome().trim());
         vantagem.setDescricao(request.getDescricao().trim());
         vantagem.setCustoMoedas(request.getCustoMoedas());
-        vantagem.setFotoUrl(request.getFotoUrl() != null ? request.getFotoUrl().trim() : null);
+        
+        // Atualiza a foto apenas se uma nova string Base64 for enviada
+        if (request.getFotoUrl() != null && !request.getFotoUrl().trim().isEmpty()) {
+            vantagem.setFoto(converterBase64ParaBytes(request.getFotoUrl()));
+        }
         
         vantagem = vantagemRepository.save(vantagem);
         
         return convertToResponseDTO(vantagem);
     }
     
-    // Deletar vantagem
     public void deletarVantagem(Long id) {
         Vantagem vantagem = vantagemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Vantagem não encontrada"));
@@ -101,7 +101,6 @@ public class VantagemService {
         vantagemRepository.delete(vantagem);
     }
     
-    // Ativar vantagem
     public VantagemResponseDTO ativarVantagem(Long id) {
         Vantagem vantagem = vantagemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Vantagem não encontrada"));
@@ -112,7 +111,6 @@ public class VantagemService {
         return convertToResponseDTO(vantagem);
     }
     
-    // Desativar vantagem
     public VantagemResponseDTO desativarVantagem(Long id) {
         Vantagem vantagem = vantagemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Vantagem não encontrada"));
@@ -123,7 +121,6 @@ public class VantagemService {
         return convertToResponseDTO(vantagem);
     }
     
-    // Buscar vantagens por empresa
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> buscarPorEmpresa(Long empresaId) {
         return vantagemRepository.findByEmpresaId(empresaId)
@@ -132,7 +129,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar vantagens ativas por empresa
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> buscarAtivasPorEmpresa(Long empresaId) {
         return vantagemRepository.findByEmpresaIdAndAtivaTrue(empresaId)
@@ -141,7 +137,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar por nome
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> buscarPorNome(String nome) {
         return vantagemRepository.findByNomeContainingIgnoreCase(nome)
@@ -150,7 +145,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar por descrição
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> buscarPorDescricao(String descricao) {
         return vantagemRepository.findByDescricaoContainingIgnoreCase(descricao)
@@ -159,7 +153,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar vantagens por faixa de preço
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> buscarPorFaixaPreco(BigDecimal minimo, BigDecimal maximo) {
         return vantagemRepository.findByCustoMoedasBetween(minimo, maximo)
@@ -168,7 +161,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar vantagens que o aluno consegue pagar
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> buscarQueAlunoConseguePagar(BigDecimal saldoAluno) {
         return vantagemRepository.findVantagensQueAlunoConseguePagar(saldoAluno)
@@ -177,7 +169,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar vantagens mais baratas
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> buscarMaisBaratas() {
         return vantagemRepository.findVantagensOrdemCrescente()
@@ -186,7 +177,6 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Buscar vantagens mais caras
     @Transactional(readOnly = true)
     public List<VantagemResponseDTO> buscarMaisCaras() {
         return vantagemRepository.findVantagensOrdemDecrescente()
@@ -195,24 +185,36 @@ public class VantagemService {
                 .collect(Collectors.toList());
     }
     
-    // Estatísticas - custo médio por empresa
     @Transactional(readOnly = true)
     public BigDecimal calcularCustoMedioPorEmpresa(Long empresaId) {
         return vantagemRepository.findCustoMedioPorEmpresa(empresaId);
     }
     
-    // Estatísticas - custo mínimo por empresa
     @Transactional(readOnly = true)
     public BigDecimal calcularCustoMinimoPorEmpresa(Long empresaId) {
         return vantagemRepository.findCustoMinimoPorEmpresa(empresaId);
     }
     
-    // Estatísticas - custo máximo por empresa
     @Transactional(readOnly = true)
     public BigDecimal calcularCustoMaximoPorEmpresa(Long empresaId) {
         return vantagemRepository.findCustoMaximoPorEmpresa(empresaId);
     }
     
+    // Função auxiliar para converter String Base64 -> byte[]
+    private byte[] converterBase64ParaBytes(String base64) {
+        if (base64 == null || base64.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            if (base64.contains(",")) {
+                base64 = base64.split(",")[1];
+            }
+            return Base64.getDecoder().decode(base64);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
     // Converter entidade para DTO de resposta
     private VantagemResponseDTO convertToResponseDTO(Vantagem vantagem) {
         VantagemResponseDTO dto = new VantagemResponseDTO();
@@ -222,7 +224,14 @@ public class VantagemService {
         dto.setNome(vantagem.getNome());
         dto.setDescricao(vantagem.getDescricao());
         dto.setCustoMoedas(vantagem.getCustoMoedas());
-        dto.setFotoUrl(vantagem.getFotoUrl());
+        
+        if (vantagem.getFoto() != null && vantagem.getFoto().length > 0) {
+            String base64 = Base64.getEncoder().encodeToString(vantagem.getFoto());
+            dto.setFotoUrl("data:image/jpeg;base64," + base64);
+        } else {
+            dto.setFotoUrl(null);
+        }
+        
         dto.setAtiva(vantagem.getAtiva());
         dto.setDataCriacao(vantagem.getDataCriacao());
         return dto;

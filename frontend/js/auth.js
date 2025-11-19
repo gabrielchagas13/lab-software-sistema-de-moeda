@@ -113,7 +113,7 @@ function buildSidebar(role, rootPrefix, pagesPrefix) { // <-- MUDANÇA
     else if (role === 'EMPRESA') {
          navHTML = 
             createNavLink(`${rootPrefix}index.html`, "fa-home", "Dashboard") +
-            createNavLink(`${pagesPrefix}vantagens.html`, "fa-gift", "Gerenciar Vantagens") +
+            createNavLink(`${pagesPrefix}minhas_vantagens.html`, "fa-gift", "Vantagens") + // Link atualizado
             createNavLink(`${pagesPrefix}sobre.html`, "fa-info-circle", "Sobre");
     }
 

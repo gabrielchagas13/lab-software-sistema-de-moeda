@@ -1,5 +1,6 @@
 package com.sistemamoeda.config;
 
+// Imports dos Models
 import com.sistemamoeda.model.Aluno;
 import com.sistemamoeda.model.Empresa;
 import com.sistemamoeda.model.Instituicao;
@@ -8,6 +9,7 @@ import com.sistemamoeda.model.TipoUsuario;
 import com.sistemamoeda.model.Usuario;
 import com.sistemamoeda.model.Vantagem;
 
+// Imports dos Repositories
 import com.sistemamoeda.repository.AlunoRepository;
 import com.sistemamoeda.repository.EmpresaRepository;
 import com.sistemamoeda.repository.InstituicaoRepository;
@@ -15,6 +17,7 @@ import com.sistemamoeda.repository.ProfessorRepository;
 import com.sistemamoeda.repository.UsuarioRepository;
 import com.sistemamoeda.repository.VantagemRepository;
 
+// Imports do Spring e Java
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -127,7 +130,10 @@ public class DataInitializer {
                 empresaRepo.save(empresa);
                 System.out.println(">>> Usuário EMPRESA 'empresa@teste.com' criado <<<");
             } else {
-                empresa = empresaRepo.findByUsuarioEmail(empresaEmail).orElse(null);
+                empresa = empresaRepo.findAll().stream()
+                        .filter(e -> e.getUsuario().getEmail().equals(empresaEmail))
+                        .findFirst()
+                        .orElse(null);
             }
 
             // 6. Criar VANTAGEM (ligada à Empresa)
@@ -137,7 +143,7 @@ public class DataInitializer {
                         "Café + Pão de Queijo",
                         "Um copo de café 200ml e uma porção de pão de queijo.",
                         new BigDecimal("15.00"),
-                        "https://i.imgur.com/example.png" // URL de foto fictícia
+                        null 
                 );
                 vantagemRepo.save(vantagem);
                 System.out.println(">>> Vantagem 'Café + Pão de Queijo' criada <<<");
