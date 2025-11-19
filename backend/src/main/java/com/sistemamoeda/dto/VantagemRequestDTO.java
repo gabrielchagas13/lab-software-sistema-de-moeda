@@ -29,6 +29,5 @@ public class VantagemRequestDTO {
     @DecimalMin(value = "0.01", message = "Custo deve ser maior que zero")
     private BigDecimal custoMoedas;
     
-    @Size(max = 255, message = "URL da foto deve ter no máximo 255 caracteres")
     private String fotoUrl;
 }
