@@ -121,70 +121,87 @@ try {
     }
     
     // Resgatar vantagem (Aluno -> Empresa)
-    public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) {
-        // Buscar aluno
-        Aluno aluno = alunoRepository.findById(request.getAlunoId())
-                .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado"));
-        
-        // Buscar vantagem
-        Vantagem vantagem = vantagemRepository.findById(request.getVantagemId())
-                .orElseThrow(() -> new EntityNotFoundException("Vantagem não encontrada"));
-        
-        // Verificar se vantagem está ativa
-        if (!vantagem.getAtiva()) {
-            throw new IllegalArgumentException("Vantagem não está ativa");
-        }
-        
-        // Verificar se aluno tem saldo suficiente
-        if (!aluno.podeGastar(vantagem.getCustoMoedas())) {
-            throw new IllegalArgumentException("Aluno não possui saldo suficiente. Saldo atual: " + aluno.getSaldoMoedas() + ", Custo: " + vantagem.getCustoMoedas());
-        }
-        
-        // Descontar moedas do aluno
-        aluno.gastarMoedas(vantagem.getCustoMoedas());
-        alunoRepository.save(aluno);
-        
-        // Gerar código único do cupom
-        String codigoCupom = generateCupomCode();
-        
-        // Criar registro de transação
-        Transacao transacao = new Transacao(
-            TipoTransacao.RESGATE_VANTAGEM,
-            vantagem.getCustoMoedas(),
-            "Resgate da vantagem: " + vantagem.getNome(),
-            aluno.getUsuario(),
-            vantagem,
-            codigoCupom
-        );
-        
-        transacao = transacaoRepository.save(transacao);
-        
-        // Enviar email para o aluno com o cupom e notificar a empresa
-        try {
-            String emailAluno = aluno.getUsuario().getEmail();
-            String nomeAluno = aluno.getUsuario().getNome();
-            String assuntoAluno = "Seu cupom: " + codigoCupom;
-            String mensagemAluno = String.format("Olá %s,\n\nObrigado por resgatar a vantagem '%s'.\nSeu código do cupom é: %s\nApresente este código na empresa para resgatar sua vantagem.\n\nAtenciosamente,\nSistema de Moeda",
-                    nomeAluno, vantagem.getNome(), codigoCupom);
+public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) {
+    // Buscar aluno
+    Aluno aluno = alunoRepository.findById(request.getAlunoId())
+            .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado"));
 
-            emailService.enviarEmailSimples(emailAluno, assuntoAluno, mensagemAluno);
+    // Buscar vantagem
+    Vantagem vantagem = vantagemRepository.findById(request.getVantagemId())
+            .orElseThrow(() -> new EntityNotFoundException("Vantagem não encontrada"));
 
-            // Notificar empresa
-            if (vantagem.getEmpresa() != null && vantagem.getEmpresa().getUsuario() != null) {
-                String emailEmpresa = vantagem.getEmpresa().getUsuario().getEmail();
-                String nomeEmpresa = vantagem.getEmpresa().getNomeFantasia();
-                String assuntoEmpresa = "Novo resgate da vantagem: " + vantagem.getNome();
-                String mensagemEmpresa = String.format("Olá %s,\n\nO aluno %s resgatou a vantagem '%s'.\nCódigo do cupom: %s\n\nAtenciosamente,\nSistema de Moeda",
-                        nomeEmpresa, nomeAluno, vantagem.getNome(), codigoCupom);
-
-                emailService.enviarEmailSimples(emailEmpresa, assuntoEmpresa, mensagemEmpresa);
-            }
-        } catch (Exception e) {
-            System.err.println("⚠️ Falha ao enviar emails de resgate: " + e.getMessage());
-        }
-        
-        return convertToResponseDTO(transacao);
+    // Verificar se vantagem está ativa
+    if (!vantagem.getAtiva()) {
+        throw new IllegalArgumentException("Vantagem não está ativa");
     }
+
+    // Verificar se aluno tem saldo suficiente
+    if (!aluno.podeGastar(vantagem.getCustoMoedas())) {
+        throw new IllegalArgumentException("Aluno não possui saldo suficiente. Saldo atual: " + aluno.getSaldoMoedas() + ", Custo: " + vantagem.getCustoMoedas());
+    }
+
+    // Descontar moedas do aluno
+    aluno.gastarMoedas(vantagem.getCustoMoedas());
+    alunoRepository.save(aluno);
+
+    // Gerar código único do cupom (forma já usada no projeto)
+    String codigoCupom = generateCupomCode();
+
+    // Criar registro de transação (inclui codigoCupom)
+    Transacao transacao = new Transacao(
+        TipoTransacao.RESGATE_VANTAGEM,
+        vantagem.getCustoMoedas(),
+        "Resgate da vantagem: " + vantagem.getNome(),
+        aluno.getUsuario(),
+        vantagem,
+        codigoCupom
+    );
+
+    transacao = transacaoRepository.save(transacao);
+
+    try {
+        String emailAluno = aluno.getUsuario().getEmail();
+        String nomeAluno = aluno.getUsuario().getNome();
+        String assuntoAluno = "Seu cupom: " + codigoCupom;
+
+        // mensagem em HTML (pode ajustar o template conforme desejar)
+        String mensagemAlunoHtml = String.format(
+            "<html><body>" +
+            "<p>Olá %s,</p>" +
+            "<p>Obrigado por resgatar a vantagem '<b>%s</b>'.</p>" +
+            "<p>Seu código do cupom é: <b>%s</b></p>" +
+            "<p>Apresente este código (ou utilize o QR Code anexo) na empresa parceira para resgatar sua vantagem.</p>" +
+            "<br/><p>Atenciosamente,<br/>Sistema de Moeda</p>" +
+            "</body></html>",
+            escapeHtml(nomeAluno), escapeHtml(vantagem.getNome()), escapeHtml(codigoCupom)
+        );
+
+        // Gera QR Code como arquivo físico (em qrcodes/) e obtém o caminho
+        String qrConteudo = "CUPOM:" + codigoCupom + "|VANTAGEM:" + vantagem.getId() + "|ALUNO:" + aluno.getId();
+        String caminhoQr = qrCodeService.gerarQRCodeParaArquivo(qrConteudo, "cupom_" + codigoCupom);
+
+        // Envia e-mail com QR Code anexo (arquivo PNG)
+        emailService.enviarCupomComQrCode(emailAluno, assuntoAluno, mensagemAlunoHtml, caminhoQr);
+
+        // Notificar a empresa parceira (mantendo comportamento original)
+        if (vantagem.getEmpresa() != null && vantagem.getEmpresa().getUsuario() != null) {
+            String emailEmpresa = vantagem.getEmpresa().getUsuario().getEmail();
+            String nomeEmpresa = vantagem.getEmpresa().getNomeFantasia();
+            String assuntoEmpresa = "Novo resgate da vantagem: " + vantagem.getNome();
+            String mensagemEmpresa = String.format("Olá %s,\n\nO aluno %s resgatou a vantagem '%s'.\nCódigo do cupom: %s\n\nAtenciosamente,\nSistema de Moeda",
+                    nomeEmpresa, nomeAluno, vantagem.getNome(), codigoCupom);
+
+            emailService.enviarEmailSimples(emailEmpresa, assuntoEmpresa, mensagemEmpresa);
+        }
+
+    } catch (Exception e) {
+        // não interromper o fluxo do resgate apenas por falha no envio de e-mail
+        log.error("Falha ao enviar e-mail com cupom para aluno: {}", e.getMessage(), e);
+    }
+
+    return convertToResponseDTO(transacao);
+}
+
     
     // Adicionar crédito semestral para todos os professores
     public List<TransacaoResponseDTO> adicionarCreditoSemestral() {
