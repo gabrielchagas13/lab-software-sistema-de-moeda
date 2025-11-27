@@ -9,10 +9,13 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface VantagemRepository extends JpaRepository<Vantagem, Long> {
-    
+    // Buscar por nome exato
+    Optional<Vantagem> findByNome(String nome);
+
     // Buscar por empresa
     List<Vantagem> findByEmpresa(Empresa empresa);
     
