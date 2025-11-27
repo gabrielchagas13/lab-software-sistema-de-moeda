@@ -3,6 +3,8 @@ package com.sistemamoeda.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -22,13 +25,6 @@ public class EmailService {
 
     private final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    /**
-     * Envia um e-mail simples de texto.
-     *
-     * @param destinatario Email do destinatário
-     * @param assunto      Assunto do e-mail
-     * @param mensagem     Corpo do e-mail
-     */
     @Async
     public void enviarEmailSimples(String destinatario, String assunto, String mensagem) {
         try {
@@ -43,10 +39,6 @@ public class EmailService {
         }
     }
 
-    /**
-     * Envia um e-mail HTML contendo a mensagem e um GIF aleatório.
-     * O GIF é referenciado por URL (externo).
-     */
     @Async
     public void enviarEmailHtmlComGif(String destinatario, String assunto, String mensagem) {
         List<String> gifs = Arrays.asList(
@@ -62,10 +54,43 @@ public class EmailService {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
-            String html = "<html><body>" +
-                    "<p>" + escapeHtml(mensagem).replace("\n", "<br/>") + "</p>" +
-                    "<p><img src='" + gif + "' alt='celebration' style='max-width:100%;height:auto'/></p>" +
-                    "</body></html>";
+            String html = """
+            <html>
+            <body style="font-family: Arial, sans-serif; background-color:#f2f2f2; padding:30px;">
+                <div style="
+                    max-width:600px;
+                    margin:auto;
+                    background:white;
+                    padding:25px;
+                    border-radius:12px;
+                    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+                    text-align:center;
+                ">
+                    <h2 style="color:#4A90E2; margin-bottom:20px;">📩 Você recebeu uma mensagem!</h2>
+                    
+                    <p style="
+                        font-size:16px;
+                        color:#333;
+                        line-height:1.6;
+                        text-align:left;
+                    ">
+                        %s
+                    </p>
+
+                    <div style="margin:25px 0;">
+                        <img src="%s" alt="gif" style="width:100%%; max-width:380px; border-radius:10px;">
+                    </div>
+
+                    <p style="color:#888; font-size:13px; margin-top:25px;">
+                        Esta é uma mensagem automática — por favor, não responda.
+                    </p>
+                </div>
+            </body>
+            </html>
+            """.formatted(
+                escapeHtml(mensagem).replace("\n", "<br/>"),
+                gif
+            );
 
             helper.setTo(destinatario);
             helper.setSubject(assunto);
@@ -77,8 +102,12 @@ public class EmailService {
         }
     }
 
-    // Pequena utilidade para escapar caracteres HTML básicos (evita injeção simples)
     @Async
+    public void sendSimpleEmail(String to, String subject, String text) {
+        enviarEmailSimples(to, subject, text);
+    }
+
+    // utilitário seguro de escape HTML (mantido localmente)
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
@@ -88,11 +117,24 @@ public class EmailService {
                 .replace("'", "&#x27;");
     }
 
-    /**
-     * Compatibilidade: alias para {@link #enviarEmailSimples(String, String, String)}.
-     */
     @Async
-    public void sendSimpleEmail(String to, String subject, String text) {
-        enviarEmailSimples(to, subject, text);
+    public void enviarCupomComQrCodeInline(String destinatario, String assunto, String mensagemHtml, byte[] qrCodeBytes) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(destinatario);
+            helper.setSubject(assunto);
+            helper.setText(mensagemHtml, true);
+
+            helper.addInline("qrcodeinline", new ByteArrayResource(qrCodeBytes), "image/png");
+
+            mailSender.send(mimeMessage);
+
+        } catch (Exception e) {
+            log.error("Erro ao enviar email HTML com QR inline: {}", e.getMessage(), e);
+        }
     }
+
 }
+
