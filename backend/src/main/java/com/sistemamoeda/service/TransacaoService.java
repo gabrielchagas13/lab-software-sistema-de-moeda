@@ -1,6 +1,8 @@
 package com.sistemamoeda.service;
 
+import org.apache.commons.text.StringEscapeUtils;
 import com.sistemamoeda.service.EmailService;
+import com.sistemamoeda.service.QRCodeService;
 import com.sistemamoeda.dto.TransacaoRequestDTO;
 import com.sistemamoeda.dto.TransacaoResponseDTO;
 import com.sistemamoeda.dto.ResgateVantagemRequestDTO;
@@ -33,7 +35,10 @@ public class TransacaoService {
 
     @Autowired
     private EmailService emailService;
-    
+   
+    @Autowired
+    private QRCodeService qrCodeService;
+
 
 
     // Enviar moedas (Professor -> Aluno)
@@ -166,22 +171,62 @@ public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) 
 
         // mensagem em HTML (pode ajustar o template conforme desejar)
         String mensagemAlunoHtml = String.format(
-            "<html><body>" +
-            "<p>Olá %s,</p>" +
-            "<p>Obrigado por resgatar a vantagem '<b>%s</b>'.</p>" +
-            "<p>Seu código do cupom é: <b>%s</b></p>" +
-            "<p>Apresente este código (ou utilize o QR Code anexo) na empresa parceira para resgatar sua vantagem.</p>" +
-            "<br/><p>Atenciosamente,<br/>Sistema de Moeda</p>" +
-            "</body></html>",
-            escapeHtml(nomeAluno), escapeHtml(vantagem.getNome()), escapeHtml(codigoCupom)
+            """
+            <html>
+            <body style="font-family: Arial, sans-serif; background-color:#f7f7f7; padding:20px;">
+                <div style="max-width:600px; margin:auto; background:white; padding:25px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+                    
+                    <h2 style="color:#333; text-align:center;">🎉 Seu Cupom Está Pronto!</h2>
+                    
+                    <p>Olá <b>%s</b>,</p>
+
+                    <p>Obrigado por resgatar a vantagem:</p>
+                    
+                    <div style="padding:10px 15px; background:#eef5ff; border-left:4px solid #4a90e2; border-radius:5px; margin:10px 0;">
+                        <b>%s</b>
+                    </div>
+
+                    <p>O seu código do cupom é:</p>
+
+                    <div style="font-size:20px; padding:10px 15px; background:#fff3cd; border-left:4px solid #f0ad4e; border-radius:5px; margin:10px 0;">
+                        <b>%s</b>
+                    </div>
+
+                    <p>
+                        Você pode apresentar esse código <b>ou</b> utilizar o QR Code abaixo para resgatar sua vantagem:<br><br>
+                    </p>
+
+                    <div style="text-align:center;">
+                        <img src="cid:qrcodeinline" style="width:250px; height:250px;"/>
+                    </div>
+
+                    <p style="margin-top:25px;">
+                        Atenciosamente,<br/>
+                        <b>Sistema de Moeda</b>
+                    </p>
+
+                    <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;"/>
+
+                    <p style="font-size:12px; color:#777; text-align:center;">
+                        Este é um e-mail automático. Não responda.
+                    </p>
+
+                </div>
+            </body>
+            </html>
+            """,
+            StringEscapeUtils.escapeHtml4(nomeAluno),
+            StringEscapeUtils.escapeHtml4(vantagem.getNome()),
+            StringEscapeUtils.escapeHtml4(codigoCupom)
         );
+
+
 
         // Gera QR Code como arquivo físico (em qrcodes/) e obtém o caminho
         String qrConteudo = "CUPOM:" + codigoCupom + "|VANTAGEM:" + vantagem.getId() + "|ALUNO:" + aluno.getId();
-        String caminhoQr = qrCodeService.gerarQRCodeParaArquivo(qrConteudo, "cupom_" + codigoCupom);
+        byte[] qrBytes = qrCodeService.gerarQRCodeBytes(qrConteudo);
 
-        // Envia e-mail com QR Code anexo (arquivo PNG)
-        emailService.enviarCupomComQrCode(emailAluno, assuntoAluno, mensagemAlunoHtml, caminhoQr);
+        emailService.enviarCupomComQrCodeInline(emailAluno, assuntoAluno, mensagemAlunoHtml, qrBytes);
 
         // Notificar a empresa parceira (mantendo comportamento original)
         if (vantagem.getEmpresa() != null && vantagem.getEmpresa().getUsuario() != null) {
@@ -196,7 +241,8 @@ public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) 
 
     } catch (Exception e) {
         // não interromper o fluxo do resgate apenas por falha no envio de e-mail
-        log.error("Falha ao enviar e-mail com cupom para aluno: {}", e.getMessage(), e);
+        System.out.println(String.format("Falha ao enviar e-mail com cupom para aluno: %s", e.getMessage()));
+        e.printStackTrace();
     }
 
     return convertToResponseDTO(transacao);

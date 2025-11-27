@@ -3,6 +3,7 @@ package com.sistemamoeda.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -53,10 +54,43 @@ public class EmailService {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
-            String html = "<html><body>" +
-                    "<p>" + escapeHtml(mensagem).replace("\n", "<br/>") + "</p>" +
-                    "<p><img src='" + gif + "' alt='celebration' style='max-width:100%;height:auto'/></p>" +
-                    "</body></html>";
+            String html = """
+            <html>
+            <body style="font-family: Arial, sans-serif; background-color:#f2f2f2; padding:30px;">
+                <div style="
+                    max-width:600px;
+                    margin:auto;
+                    background:white;
+                    padding:25px;
+                    border-radius:12px;
+                    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+                    text-align:center;
+                ">
+                    <h2 style="color:#4A90E2; margin-bottom:20px;">📩 Você recebeu uma mensagem!</h2>
+                    
+                    <p style="
+                        font-size:16px;
+                        color:#333;
+                        line-height:1.6;
+                        text-align:left;
+                    ">
+                        %s
+                    </p>
+
+                    <div style="margin:25px 0;">
+                        <img src="%s" alt="gif" style="width:100%%; max-width:380px; border-radius:10px;">
+                    </div>
+
+                    <p style="color:#888; font-size:13px; margin-top:25px;">
+                        Esta é uma mensagem automática — por favor, não responda.
+                    </p>
+                </div>
+            </body>
+            </html>
+            """.formatted(
+                escapeHtml(mensagem).replace("\n", "<br/>"),
+                gif
+            );
 
             helper.setTo(destinatario);
             helper.setSubject(assunto);
@@ -73,42 +107,6 @@ public class EmailService {
         enviarEmailSimples(to, subject, text);
     }
 
-    /**
-     * Envia um e-mail HTML com o QR Code anexado (arquivo PNG).
-     *
-     * @param destinatario  e-mail do destinatário
-     * @param assunto       assunto do e-mail
-     * @param mensagemHtml  corpo em HTML (já formatado)
-     * @param arquivoQRCode caminho para o arquivo PNG do QR Code
-     */
-    @Async
-    public void enviarCupomComQrCode(String destinatario, String assunto, String mensagemHtml, String arquivoQRCode) {
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            // true = multipart
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            helper.setTo(destinatario);
-            helper.setSubject(assunto);
-            helper.setText(mensagemHtml, true);
-
-            // Anexa o arquivo (se existir)
-            if (arquivoQRCode != null) {
-                FileSystemResource file = new FileSystemResource(new File(arquivoQRCode));
-                if (file.exists()) {
-                    helper.addAttachment("qrcode.png", file);
-                } else {
-                    log.warn("Arquivo QR Code não encontrado para anexar: {}", arquivoQRCode);
-                }
-            }
-
-            mailSender.send(mimeMessage);
-            log.info("E-mail de cupom enviado para {}", destinatario);
-        } catch (Exception e) {
-            log.error("Erro ao enviar email de cupom: {}", e.getMessage(), e);
-        }
-    }
-
     // utilitário seguro de escape HTML (mantido localmente)
     private String escapeHtml(String text) {
         if (text == null) return "";
@@ -118,4 +116,25 @@ public class EmailService {
                 .replace("\"", "&quot;")
                 .replace("'", "&#x27;");
     }
+
+    @Async
+    public void enviarCupomComQrCodeInline(String destinatario, String assunto, String mensagemHtml, byte[] qrCodeBytes) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(destinatario);
+            helper.setSubject(assunto);
+            helper.setText(mensagemHtml, true);
+
+            helper.addInline("qrcodeinline", new ByteArrayResource(qrCodeBytes), "image/png");
+
+            mailSender.send(mimeMessage);
+
+        } catch (Exception e) {
+            log.error("Erro ao enviar email HTML com QR inline: {}", e.getMessage(), e);
+        }
+    }
+
 }
+
