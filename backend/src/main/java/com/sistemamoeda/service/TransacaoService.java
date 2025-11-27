@@ -223,7 +223,7 @@ public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) 
 
 
         // Gera QR Code como arquivo físico (em qrcodes/) e obtém o caminho
-        String qrConteudo = "CUPOM:" + codigoCupom + "|VANTAGEM:" + vantagem.getId() + "|ALUNO:" + aluno.getId();
+        String qrConteudo = codigoCupom;
         byte[] qrBytes = qrCodeService.gerarQRCodeBytes(qrConteudo);
 
         emailService.enviarCupomComQrCodeInline(emailAluno, assuntoAluno, mensagemAlunoHtml, qrBytes);
@@ -392,10 +392,62 @@ public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) 
             String emailDest = destinatario.getEmail();
             String nomeDest = destinatario.getNome();
             String assunto = "Você recebeu um cupom transferido: " + troca.getCodigoCupom();
-            String mensagem = String.format("Olá %s,\n\nVocê recebeu o cupom %s transferido por %s para a vantagem '%s'.\nApresente o código para resgatar a vantagem.\n\nAtenciosamente,\nSistema de Moeda",
-                    nomeDest, troca.getCodigoCupom(), remetente.getNome(), troca.getVantagem().getNome());
+            String mensagemTransferenciaHtml = String.format(
+                """
+                <html>
+                <body style="font-family: Arial, sans-serif; background-color:#f7f7f7; padding:20px;">
+                    <div style="max-width:600px; margin:auto; background:white; padding:25px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+                        
+                        <h2 style="color:#333; text-align:center;">🎁 Você recebeu um Cupom!</h2>
+                        
+                        <p>Olá <b>%s</b>,</p>
 
-            emailService.enviarEmailSimples(emailDest, assunto, mensagem);
+                        <p>O aluno(a) <b>%s</b> transferiu a seguinte vantagem para você:</p>
+                        
+                        <div style="padding:10px 15px; background:#eef5ff; border-left:4px solid #4a90e2; border-radius:5px; margin:10px 0;">
+                            <b>%s</b>
+                        </div>
+
+                        <p>O seu código do cupom é:</p>
+
+                        <div style="font-size:20px; padding:10px 15px; background:#fff3cd; border-left:4px solid #f0ad4e; border-radius:5px; margin:10px 0;">
+                            <b>%s</b>
+                        </div>
+
+                        <p>
+                            Você pode apresentar esse código <b>ou</b> utilizar o QR Code abaixo para resgatar sua vantagem:<br><br>
+                        </p>
+
+                        <div style="text-align:center;">
+                            <img src="cid:qrcodeinline" style="width:250px; height:250px;"/>
+                        </div>
+
+                        <p style="margin-top:25px;">
+                            Atenciosamente,<br/>
+                            <b>Sistema de Moeda</b>
+                        </p>
+
+                        <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;"/>
+
+                        <p style="font-size:12px; color:#777; text-align:center;">
+                            Este é um e-mail automático. Não responda.
+                        </p>
+
+                    </div>
+                </body>
+                </html>
+                """,
+                StringEscapeUtils.escapeHtml4(destinatario.getNome()),       // 1º %s: Nome do Destinatário
+                StringEscapeUtils.escapeHtml4(remetente.getNome()),          // 2º %s: Nome de quem enviou
+                StringEscapeUtils.escapeHtml4(troca.getVantagem().getNome()),// 3º %s: Nome da Vantagem
+                StringEscapeUtils.escapeHtml4(troca.getCodigoCupom())        // 4º %s: Código do Cupom
+            );
+
+            String qrConteudo = troca.getCodigoCupom();
+
+            byte[] qrBytes = qrCodeService.gerarQRCodeBytes(qrConteudo);
+
+            emailService.enviarCupomComQrCodeInline(destinatario.getEmail(), assunto, mensagemTransferenciaHtml, qrBytes);
 
             if (troca.getVantagem().getEmpresa() != null && troca.getVantagem().getEmpresa().getUsuario() != null) {
                 String emailEmpresa = troca.getVantagem().getEmpresa().getUsuario().getEmail();
