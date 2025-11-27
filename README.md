@@ -99,12 +99,3 @@ docker compose down
 
 
 
-🧠 Notas Técnicas
-
-spring.jpa.hibernate.ddl-auto=create-drop está configurado para ambiente de desenvolvimento, recriando o schema a cada execução.
-
-Volume Docker (db_data) deveria manter os dados mesmo após terminar os containers, mas esse não é o cenário que observamos. Estamos investigando a causa desse problema para finalizar  o processo de dockerização completamente.
-
-Senha gerada pelo Spring Security é temporária e aparece no log do backend.
-
-Frontend e backend se comunicam via rede interna do Docker (sistema-moeda-network).
