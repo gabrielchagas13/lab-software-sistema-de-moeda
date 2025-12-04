@@ -118,8 +118,12 @@ public class EmailService {
     }
 
     @Async
-    public void enviarCupomComQrCodeInline(String destinatario, String assunto, String mensagemHtml, byte[] qrCodeBytes) {
+    public void enviarCupomComQrCodeInline(String destinatario, String assunto, String mensagemHtml, byte[] qrCodeBytes, byte[] fotoVantagem) {
         try {
+            if (destinatario == null || destinatario.isBlank()) {
+                throw new IllegalArgumentException("Destinatário inválido");
+            }
+
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
@@ -127,12 +131,35 @@ public class EmailService {
             helper.setSubject(assunto);
             helper.setText(mensagemHtml, true);
 
-            helper.addInline("qrcodeinline", new ByteArrayResource(qrCodeBytes), "image/png");
+            // Adiciona QR code inline
+            if (qrCodeBytes != null && qrCodeBytes.length > 0) {
+                helper.addInline("qrcodeinline", new ByteArrayResource(qrCodeBytes) {
+                    @Override
+                    public String getFilename() {
+                        return "qrcode.png";
+                    }
+                }, "image/png");
+            } else {
+                log.warn("QR code vazio, não será adicionado ao e-mail");
+            }
+
+            // Adiciona foto da vantagem inline
+            if (fotoVantagem != null && fotoVantagem.length > 0) {
+                helper.addInline("imagemVantagem", new ByteArrayResource(fotoVantagem) {
+                    @Override
+                    public String getFilename() {
+                        return "vantagem.jpg"; // ajuste se for PNG
+                    }
+                }, "image/jpeg"); // ajuste para image/png se necessário
+            } else {
+                log.warn("Foto da vantagem vazia, não será adicionada ao e-mail");
+            }
 
             mailSender.send(mimeMessage);
+            log.info("E-mail enviado com sucesso para {}", destinatario);
 
         } catch (Exception e) {
-            log.error("Erro ao enviar email HTML com QR inline: {}", e.getMessage(), e);
+            log.error("Erro ao enviar e-mail HTML com QR inline", e);
         }
     }
 
