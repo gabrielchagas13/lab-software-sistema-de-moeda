@@ -64,7 +64,7 @@ public class DataInitializer {
             }
 
             // 3. Criar Usuário ALUNO
-            String alunoEmail = "aluno@teste.com";
+            String alunoEmail = "pedromaiasilva17@gmail.com";
             if (!usuarioRepo.existsByEmail(alunoEmail)) {
                 Usuario userAluno = new Usuario(
                         "Aluno Teste",

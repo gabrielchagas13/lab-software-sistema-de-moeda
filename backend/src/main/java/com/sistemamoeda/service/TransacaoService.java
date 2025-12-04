@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
+import java.util.Base64;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -126,127 +126,121 @@ try {
     }
     
     // Resgatar vantagem (Aluno -> Empresa)
-public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) {
-    // Buscar aluno
-    Aluno aluno = alunoRepository.findById(request.getAlunoId())
-            .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado"));
+    public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) {
 
-    // Buscar vantagem
-    Vantagem vantagem = vantagemRepository.findById(request.getVantagemId())
-            .orElseThrow(() -> new EntityNotFoundException("Vantagem não encontrada"));
+        // Buscar aluno
+        Aluno aluno = alunoRepository.findById(request.getAlunoId())
+                .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado"));
 
-    // Verificar se vantagem está ativa
-    if (!vantagem.getAtiva()) {
-        throw new IllegalArgumentException("Vantagem não está ativa");
-    }
+        // Buscar vantagem
+        Vantagem vantagem = vantagemRepository.findById(request.getVantagemId())
+                .orElseThrow(() -> new EntityNotFoundException("Vantagem não encontrada"));
 
-    // Verificar se aluno tem saldo suficiente
-    if (!aluno.podeGastar(vantagem.getCustoMoedas())) {
-        throw new IllegalArgumentException("Aluno não possui saldo suficiente. Saldo atual: " + aluno.getSaldoMoedas() + ", Custo: " + vantagem.getCustoMoedas());
-    }
+        // Verificar se vantagem está ativa
+        if (!vantagem.getAtiva()) {
+            throw new IllegalArgumentException("Vantagem não está ativa");
+        }
 
-    // Descontar moedas do aluno
-    aluno.gastarMoedas(vantagem.getCustoMoedas());
-    alunoRepository.save(aluno);
+        // Verificar saldo
+        if (!aluno.podeGastar(vantagem.getCustoMoedas())) {
+            throw new IllegalArgumentException("Saldo insuficiente. Saldo atual: "
+                    + aluno.getSaldoMoedas() + " | Custo: " + vantagem.getCustoMoedas());
+        }
 
-    // Gerar código único do cupom (forma já usada no projeto)
-    String codigoCupom = generateCupomCode();
+        // Descontar moedas
+        aluno.gastarMoedas(vantagem.getCustoMoedas());
+        alunoRepository.save(aluno);
 
-    // Criar registro de transação (inclui codigoCupom)
-    Transacao transacao = new Transacao(
-        TipoTransacao.RESGATE_VANTAGEM,
-        vantagem.getCustoMoedas(),
-        "Resgate da vantagem: " + vantagem.getNome(),
-        aluno.getUsuario(),
-        vantagem,
-        codigoCupom
-    );
+        // Gerar cupom
+        String codigoCupom = generateCupomCode();
 
-    transacao = transacaoRepository.save(transacao);
+        // Registrar transação
+        Transacao transacao = new Transacao(
+            TipoTransacao.RESGATE_VANTAGEM,
+            vantagem.getCustoMoedas(),
+            "Resgate da vantagem: " + vantagem.getNome(),
+            aluno.getUsuario(),
+            vantagem,
+            codigoCupom
+        );
 
-    try {
-        String emailAluno = aluno.getUsuario().getEmail();
-        String nomeAluno = aluno.getUsuario().getNome();
-        String assuntoAluno = "Seu cupom: " + codigoCupom;
+        transacao = transacaoRepository.save(transacao);
 
-        // mensagem em HTML (pode ajustar o template conforme desejar)
-        String mensagemAlunoHtml = String.format(
-            """
+
+        try {
+            String emailAluno = aluno.getUsuario().getEmail();
+            String nomeAluno = aluno.getUsuario().getNome();
+            String assuntoAluno = "Seu cupom: " + codigoCupom;
+
+            // HTML agora utiliza CID ao invés de Base64
+            String mensagemAlunoHtml = String.format("""
             <html>
-            <body style="font-family: Arial, sans-serif; background-color:#f7f7f7; padding:20px;">
-                <div style="max-width:600px; margin:auto; background:white; padding:25px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+            <body style="font-family: Arial; background:#f7f7f7; padding:20px;">
+                <div style="max-width:600px;margin:auto;background:white;padding:25px;border-radius:10px">
                     
-                    <h2 style="color:#333; text-align:center;">🎉 Seu Cupom Está Pronto!</h2>
-                    
-                    <p>Olá <b>%s</b>,</p>
+                    <h2 style="text-align:center;color:#333">🎉 Seu Cupom Está Pronto!</h2>
 
-                    <p>Obrigado por resgatar a vantagem:</p>
-                    
-                    <div style="padding:10px 15px; background:#eef5ff; border-left:4px solid #4a90e2; border-radius:5px; margin:10px 0;">
+                    <p>Olá <b>%s</b>, obrigado por resgatar a vantagem:</p>
+
+                    <div style="padding:10px;background:#eef5ff;border-left:4px solid #4a90e2;border-radius:5px;margin:10px 0">
                         <b>%s</b>
                     </div>
 
-                    <p>O seu código do cupom é:</p>
+                    <!-- Agora a imagem é carregada via CID -->
+                    <div style="text-align:center;margin:20px 0">
+                        <img src="cid:imagemVantagem" style="max-width:300px;width:100%%;border-radius:12px"/>
+                    </div>
 
-                    <div style="font-size:20px; padding:10px 15px; background:#fff3cd; border-left:4px solid #f0ad4e; border-radius:5px; margin:10px 0;">
+                    <p>Use o código abaixo para resgatar sua vantagem:</p>
+
+                    <div style="background:#fff3cd;border-left:4px solid #f0ad4e;padding:10px;font-size:20px;margin:10px 0">
                         <b>%s</b>
                     </div>
 
-                    <p>
-                        Você pode apresentar esse código <b>ou</b> utilizar o QR Code abaixo para resgatar sua vantagem:<br><br>
-                    </p>
+                    <p>Ou utilize o QR Code abaixo:</p>
 
-                    <div style="text-align:center;">
-                        <img src="cid:qrcodeinline" style="width:250px; height:250px;"/>
+                    <div style="text-align:center;margin-top:15px">
+                        <img src="cid:qrcodeinline" style="width:250px;height:250px"/>
                     </div>
 
-                    <p style="margin-top:25px;">
-                        Atenciosamente,<br/>
-                        <b>Sistema de Moeda</b>
-                    </p>
+                    <p style="margin-top:25px">Atenciosamente,<br><b>Sistema de Moeda</b></p>
 
-                    <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;"/>
-
-                    <p style="font-size:12px; color:#777; text-align:center;">
-                        Este é um e-mail automático. Não responda.
-                    </p>
-
+                    <hr style="margin-top:30px">
+                    <p style="font-size:12px;color:#777;text-align:center">E-mail automático — não responda</p>
                 </div>
             </body>
             </html>
             """,
-            StringEscapeUtils.escapeHtml4(nomeAluno),
-            StringEscapeUtils.escapeHtml4(vantagem.getNome()),
-            StringEscapeUtils.escapeHtml4(codigoCupom)
-        );
+                StringEscapeUtils.escapeHtml4(nomeAluno),
+                StringEscapeUtils.escapeHtml4(vantagem.getNome()),
+                codigoCupom
+            );
+
+            // Gera QRCode em bytes
+            byte[] qrBytes = qrCodeService.gerarQRCodeBytes(codigoCupom);
+            byte[] foto = vantagem.getFoto();
+
+            // Envia com Inline CID (foto + qrcode)
+            emailService.enviarCupomComQrCodeInline(emailAluno, assuntoAluno, mensagemAlunoHtml, qrBytes, foto);
 
 
 
-        // Gera QR Code como arquivo físico (em qrcodes/) e obtém o caminho
-        String qrConteudo = codigoCupom;
-        byte[] qrBytes = qrCodeService.gerarQRCodeBytes(qrConteudo);
+            // Notifica empresa
+            if (vantagem.getEmpresa() != null && vantagem.getEmpresa().getUsuario() != null) {
+                emailService.enviarEmailSimples(
+                        vantagem.getEmpresa().getUsuario().getEmail(),
+                        "Novo resgate: " + vantagem.getNome(),
+                        "O aluno " + nomeAluno + " resgatou a vantagem.\nCódigo: " + codigoCupom
+                );
+            }
 
-        emailService.enviarCupomComQrCodeInline(emailAluno, assuntoAluno, mensagemAlunoHtml, qrBytes);
-
-        // Notificar a empresa parceira (mantendo comportamento original)
-        if (vantagem.getEmpresa() != null && vantagem.getEmpresa().getUsuario() != null) {
-            String emailEmpresa = vantagem.getEmpresa().getUsuario().getEmail();
-            String nomeEmpresa = vantagem.getEmpresa().getNomeFantasia();
-            String assuntoEmpresa = "Novo resgate da vantagem: " + vantagem.getNome();
-            String mensagemEmpresa = String.format("Olá %s,\n\nO aluno %s resgatou a vantagem '%s'.\nCódigo do cupom: %s\n\nAtenciosamente,\nSistema de Moeda",
-                    nomeEmpresa, nomeAluno, vantagem.getNome(), codigoCupom);
-
-            emailService.enviarEmailSimples(emailEmpresa, assuntoEmpresa, mensagemEmpresa);
+        } catch (Exception e) {
+            System.out.println("⚠ Falha ao enviar e-mail: " + e.getMessage());
         }
 
-    } catch (Exception e) {
-        // não interromper o fluxo do resgate apenas por falha no envio de e-mail
-        System.out.println(String.format("Falha ao enviar e-mail com cupom para aluno: %s", e.getMessage()));
-        e.printStackTrace();
+        return convertToResponseDTO(transacao);
     }
 
-    return convertToResponseDTO(transacao);
-}
 
     
     // Adicionar crédito semestral para todos os professores
@@ -408,6 +402,11 @@ public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) 
                             <b>%s</b>
                         </div>
 
+                        <!-- Agora a imagem é carregada via CID -->
+                        <div style="text-align:center;margin:20px 0">
+                            <img src="cid:imagemVantagem" style="max-width:300px;width:100%%;border-radius:12px"/>
+                        </div>
+
                         <p>O seu código do cupom é:</p>
 
                         <div style="font-size:20px; padding:10px 15px; background:#fff3cd; border-left:4px solid #f0ad4e; border-radius:5px; margin:10px 0;">
@@ -447,7 +446,7 @@ public TransacaoResponseDTO resgatarVantagem(ResgateVantagemRequestDTO request) 
 
             byte[] qrBytes = qrCodeService.gerarQRCodeBytes(qrConteudo);
 
-            emailService.enviarCupomComQrCodeInline(destinatario.getEmail(), assunto, mensagemTransferenciaHtml, qrBytes);
+            emailService.enviarCupomComQrCodeInline(destinatario.getEmail(), assunto, mensagemTransferenciaHtml, qrBytes, troca.getVantagem().getFoto());
 
             if (troca.getVantagem().getEmpresa() != null && troca.getVantagem().getEmpresa().getUsuario() != null) {
                 String emailEmpresa = troca.getVantagem().getEmpresa().getUsuario().getEmail();
