@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const registerForm = document.getElementById("register-form");
     const userTypeSelector = document.getElementById("user-type-selector");
 
-    // --- MÁSCARAS ---
+    // --- 1. MÁSCARAS ---
     const maskOptions = { lazy: false };
     let alunoCpfMask, professorCpfMask, empresaCnpjMask, empresaTelefoneMask, alunoRgMask;
 
@@ -26,19 +26,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if(elEmpresaTel) empresaTelefoneMask = IMask(elEmpresaTel, { mask: '(00) 00000-0000', ...maskOptions });
         if(elAlunoRg) alunoRgMask = IMask(elAlunoRg, { mask: /^[0-9.-]+[xX0-9]?$/ });
     } else {
-        console.error("IMask não carregou. As máscaras não funcionarão.");
+        console.error("IMask não carregou.");
     }
     
     // --- 2. VALIDADORES ---
     const Validators = {
         isCPF: (cpf) => {
+            // Limpa para fazer a conta matemática
             cpf = cpf.replace(/[^\d]+/g, '');
             if (cpf === '') return false;
             if (cpf.length !== 11) return false;
             if (/^(\d)\1+$/.test(cpf)) return false;
 
             let soma = 0, resto;
-
             for (let i = 1; i <= 9; i++) 
                 soma = soma + parseInt(cpf.substring(i-1, i)) * (11 - i);
             resto = (soma * 10) % 11;
@@ -57,14 +57,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         isCNPJ: (cnpj) => {
             cnpj = cnpj.replace(/[^\d]+/g, '');
-            
             if (cnpj == '') return false;
             if (cnpj.length != 14) return false;
-        
-            // Elimina CNPJs invalidos conhecidos (ex: 11111111111111)
             if (/^(\d)\1+$/.test(cnpj)) return false;
         
-            // Valida D1
             let tamanho = cnpj.length - 2;
             let numeros = cnpj.substring(0, tamanho);
             let digitos = cnpj.substring(tamanho);
@@ -77,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
             let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
             if (resultado != digitos.charAt(0)) return false;
         
-            // Valida D2
             tamanho = tamanho + 1;
             numeros = cnpj.substring(0, tamanho);
             soma = 0;
@@ -103,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await fetch(`${API_URL}/instituicoes`); 
             if (!response.ok) throw new Error("Falha ao carregar instituições");
-            
             const instituicoes = await response.json();
             const selectAluno = document.getElementById("alunoInstituicaoId");
             const selectProfessor = document.getElementById("professorInstituicaoId");
@@ -134,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // --- 4. SUBMIT ---
     if(registerForm) {
         registerForm.addEventListener("submit", async (event) => {
             event.preventDefault();
@@ -148,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 if (selectedType === "aluno") {
-                    const cpfValue = alunoCpfMask ? alunoCpfMask.unmaskedValue : document.getElementById('alunoCpf').value;
+                    const cpfValue = alunoCpfMask ? alunoCpfMask.value : document.getElementById('alunoCpf').value;
                     const rgValue = document.getElementById('alunoRg').value;
 
                     if (!Validators.isCPF(cpfValue)) throw new Error("CPF do aluno inválido.");
@@ -164,32 +159,32 @@ document.addEventListener("DOMContentLoaded", () => {
                         endereco: document.getElementById("alunoEndereco").value
                     };
                 } else if (selectedType === "professor") {
-                    const cpfValue = professorCpfMask ? professorCpfMask.unmaskedValue : document.getElementById('professorCpf').value;
+                    const cpfValue = professorCpfMask ? professorCpfMask.value : document.getElementById('professorCpf').value;
 
                     if (!Validators.isCPF(cpfValue)) throw new Error("CPF do professor inválido.");
 
                     endpoint = `${API_URL}/professores`;
                     payload = {
                         ...payload,
-                        cpf: cpfValue,
+                        cpf: cpfValue, 
                         departamento: document.getElementById("professorDepartamento").value,
                         instituicaoId: document.getElementById("professorInstituicaoId").value
                     };
                 } else if (selectedType === "empresa") {
-                    const cnpjValue = empresaCnpjMask ? empresaCnpjMask.unmaskedValue : document.getElementById('empresaCnpj').value;
+                    endpoint = `${API_URL}/empresas`;
+                    // MUDANÇA: .value (formatado)
+                    const cnpjValue = empresaCnpjMask ? empresaCnpjMask.value : document.getElementById('empresaCnpj').value;
+                    const telValue = empresaTelefoneMask ? empresaTelefoneMask.value : document.getElementById('empresaTelefone').value;
                     
                     if (!Validators.isCNPJ(cnpjValue)) {
                         throw new Error("CNPJ inválido. Verifique os dígitos.");
                     }
 
-                    endpoint = `${API_URL}/empresas`;
-                    const telValue = empresaTelefoneMask ? empresaTelefoneMask.unmaskedValue : document.getElementById('empresaTelefone').value;
-
                     payload = {
                         ...payload,
-                        cnpj: cnpjValue,
+                        cnpj: cnpjValue, 
                         nomeFantasia: document.getElementById("empresaNomeFantasia").value,
-                        telefone: telValue,
+                        telefone: telValue, 
                         endereco: document.getElementById("empresaEndereco").value,
                         descricao: document.getElementById("empresaDescricao").value
                     };
@@ -203,7 +198,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || "Falha ao cadastrar.");
+                    let msg = "Falha ao cadastrar.";
+                    if (errorData.errors && Array.isArray(errorData.errors)) {
+                        msg = errorData.errors.map(e => e.defaultMessage).join("\n");
+                    } else if (errorData.message) {
+                        msg = errorData.message;
+                    }
+                    throw new Error(msg);
                 }
 
                 Swal.fire({
