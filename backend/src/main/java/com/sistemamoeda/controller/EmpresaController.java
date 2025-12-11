@@ -3,10 +3,8 @@ package com.sistemamoeda.controller;
 import com.sistemamoeda.dto.EmpresaRequestDTO;
 import com.sistemamoeda.dto.EmpresaResponseDTO;
 import com.sistemamoeda.service.EmpresaService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -20,7 +18,6 @@ import java.util.Map;
 @RequestMapping("/api/empresas")
 @RequiredArgsConstructor
 @Validated
-@CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:5500"})
 public class EmpresaController {
     
     private final EmpresaService empresaService;
@@ -28,18 +25,8 @@ public class EmpresaController {
     // Criar nova empresa
     @PostMapping
     public ResponseEntity<?> criarEmpresa(@Valid @RequestBody EmpresaRequestDTO request) {
-        try {
-            EmpresaResponseDTO empresa = empresaService.criarEmpresa(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(empresa);
-        } catch (DataIntegrityViolationException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", "Erro interno do servidor");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+        EmpresaResponseDTO empresa = empresaService.criarEmpresa(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(empresa);
     }
     
     // Listar todas as empresas
@@ -52,54 +39,24 @@ public class EmpresaController {
     // Buscar empresa por ID
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        try {
-            EmpresaResponseDTO empresa = empresaService.buscarPorId(id);
-            return ResponseEntity.ok(empresa);
-        } catch (EntityNotFoundException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        }
+        EmpresaResponseDTO empresa = empresaService.buscarPorId(id);
+        return ResponseEntity.ok(empresa);
     }
     
     // Atualizar empresa
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarEmpresa(@PathVariable Long id, @Valid @RequestBody EmpresaRequestDTO request) {
-        try {
-            EmpresaResponseDTO empresa = empresaService.atualizarEmpresa(id, request);
-            return ResponseEntity.ok(empresa);
-        } catch (EntityNotFoundException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        } catch (DataIntegrityViolationException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", "Erro interno do servidor");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+        EmpresaResponseDTO empresa = empresaService.atualizarEmpresa(id, request);
+        return ResponseEntity.ok(empresa);
     }
     
     // Deletar empresa
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletarEmpresa(@PathVariable Long id) {
-        try {
-            empresaService.deletarEmpresa(id);
-            Map<String, String> success = new HashMap<>();
-            success.put("mensagem", "Empresa deletada com sucesso");
-            return ResponseEntity.ok(success);
-        } catch (EntityNotFoundException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("erro", "Erro interno do servidor");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+        empresaService.deletarEmpresa(id);
+        Map<String, String> success = new HashMap<>();
+        success.put("mensagem", "Empresa deletada com sucesso");
+        return ResponseEntity.ok(success);
     }
     
     // Buscar empresas por nome fantasia

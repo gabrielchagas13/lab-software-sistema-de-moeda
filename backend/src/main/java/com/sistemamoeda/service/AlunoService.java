@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.sistemamoeda.mapper.AlunoMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -62,16 +63,16 @@ public class AlunoService {
         );
         aluno = alunoRepository.save(aluno);
 
-        return convertToResponseDTO(aluno);
+    return AlunoMapper.toDto(aluno);
     }
     
     // Buscar todos os alunos
     @Transactional(readOnly = true)
     public List<AlunoResponseDTO> listarTodos() {
-        return alunoRepository.findAll()
-                .stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+    return alunoRepository.findAll()
+        .stream()
+        .map(AlunoMapper::toDto)
+        .collect(Collectors.toList());
     }
     
     // Buscar aluno por ID
@@ -79,14 +80,14 @@ public class AlunoService {
     public AlunoResponseDTO buscarPorId(Long id) {
         Aluno aluno = alunoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado"));
-        return convertToResponseDTO(aluno);
+    return AlunoMapper.toDto(aluno);
     }
 
     @Transactional(readOnly = true)
     public AlunoResponseDTO buscarPorUsuarioId(Long usuarioId) {
-        Aluno aluno = alunoRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado para o ID de usuário: " + usuarioId));
-        return convertToResponseDTO(aluno); 
+    Aluno aluno = alunoRepository.findByUsuarioId(usuarioId)
+        .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado para o ID de usuário: " + usuarioId));
+    return AlunoMapper.toDto(aluno); 
     }
     
     // Atualizar aluno
@@ -128,8 +129,8 @@ public class AlunoService {
         aluno.setEndereco(request.getEndereco());
         aluno.setCurso(request.getCurso());
         
-        aluno = alunoRepository.save(aluno);
-        return convertToResponseDTO(aluno);
+    aluno = alunoRepository.save(aluno);
+    return AlunoMapper.toDto(aluno);
     }
     
     // Deletar aluno
@@ -144,48 +145,29 @@ public class AlunoService {
     // Buscar alunos por instituição
     @Transactional(readOnly = true)
     public List<AlunoResponseDTO> buscarPorInstituicao(String nomeInstituicao) {
-        return alunoRepository.findByInstituicaoNomeContainingIgnoreCase(nomeInstituicao)
-                .stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+    return alunoRepository.findByInstituicaoNomeContainingIgnoreCase(nomeInstituicao)
+        .stream()
+        .map(AlunoMapper::toDto)
+        .collect(Collectors.toList());
     }
     
     // Buscar alunos por curso
     @Transactional(readOnly = true)
     public List<AlunoResponseDTO> buscarPorCurso(String curso) {
-        return alunoRepository.findByCursoContainingIgnoreCase(curso)
-                .stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+    return alunoRepository.findByCursoContainingIgnoreCase(curso)
+        .stream()
+        .map(AlunoMapper::toDto)
+        .collect(Collectors.toList());
     }
     
     // Buscar alunos por nome
     @Transactional(readOnly = true)
     public List<AlunoResponseDTO> buscarPorNome(String nome) {
-        return alunoRepository.findByUsuarioNomeContainingIgnoreCase(nome)
-                .stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+    return alunoRepository.findByUsuarioNomeContainingIgnoreCase(nome)
+        .stream()
+        .map(AlunoMapper::toDto)
+        .collect(Collectors.toList());
     }
     
-    // Converter entidade para DTO de resposta
-    private AlunoResponseDTO convertToResponseDTO(Aluno aluno) {
-        AlunoResponseDTO dto = new AlunoResponseDTO();
-        dto.setId(aluno.getId());
-        dto.setUsuarioId(aluno.getUsuario().getId());
-        dto.setNome(aluno.getUsuario().getNome());
-        dto.setEmail(aluno.getUsuario().getEmail());
-        dto.setTipoUsuario(aluno.getUsuario().getTipoUsuario().name());
-        dto.setDataCriacao(aluno.getUsuario().getDataCriacao());
-        dto.setAtivo(aluno.getUsuario().getAtivo());
-        dto.setInstituicaoId(aluno.getInstituicao().getId());
-        dto.setInstituicaoNome(aluno.getInstituicao().getNome());
-        dto.setCpf(aluno.getCpf());
-        dto.setRg(aluno.getRg());
-        dto.setEndereco(aluno.getEndereco());
-        dto.setCurso(aluno.getCurso());
-        dto.setSaldoMoedas(aluno.getSaldoMoedas());
-        dto.setDataCadastro(aluno.getDataCadastro());
-        return dto;
-    }
+    // Conversões movidas para AlunoMapper
 }
