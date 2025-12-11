@@ -36,8 +36,7 @@ public class Transacao {
     @Column(columnDefinition = "TEXT")
     private String descricao;
     
-    @CreationTimestamp
-    @Column(name = "data_transacao", nullable = false, updatable = false)
+    @Column(name = "data_transacao", nullable = false)
     private LocalDateTime dataTransacao;
     
     @ManyToOne(fetch = FetchType.LAZY)
