@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.sistemamoeda.mapper.EmpresaMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -56,16 +57,23 @@ public class EmpresaService {
         );
         empresa = empresaRepository.save(empresa);
         
-        return convertToResponseDTO(empresa);
+    EmpresaResponseDTO dto = EmpresaMapper.toDto(empresa);
+    Long quantidadeVantagens = vantagemRepository.countVantagensByEmpresaId(empresa.getId());
+    dto.setQuantidadeVantagens(quantidadeVantagens);
+    return dto;
     }
     
     // Buscar todas as empresas
     @Transactional(readOnly = true)
     public List<EmpresaResponseDTO> listarTodas() {
-        return empresaRepository.findAll()
-                .stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+    return empresaRepository.findAll()
+        .stream()
+        .map(e -> {
+            EmpresaResponseDTO d = EmpresaMapper.toDto(e);
+            d.setQuantidadeVantagens(vantagemRepository.countVantagensByEmpresaId(e.getId()));
+            return d;
+        })
+        .collect(Collectors.toList());
     }
     
     // Buscar empresa por ID
@@ -73,7 +81,9 @@ public class EmpresaService {
     public EmpresaResponseDTO buscarPorId(Long id) {
         Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Empresa não encontrada"));
-        return convertToResponseDTO(empresa);
+    EmpresaResponseDTO dto = EmpresaMapper.toDto(empresa);
+    dto.setQuantidadeVantagens(vantagemRepository.countVantagensByEmpresaId(empresa.getId()));
+    return dto;
     }
     
     // Atualizar empresa
@@ -105,8 +115,10 @@ public class EmpresaService {
         empresa.setTelefone(request.getTelefone());
         empresa.setDescricao(request.getDescricao());
         
-        empresa = empresaRepository.save(empresa);
-        return convertToResponseDTO(empresa);
+    empresa = empresaRepository.save(empresa);
+    EmpresaResponseDTO dto = EmpresaMapper.toDto(empresa);
+    dto.setQuantidadeVantagens(vantagemRepository.countVantagensByEmpresaId(empresa.getId()));
+    return dto;
     }
     
     // Deletar empresa
@@ -120,50 +132,41 @@ public class EmpresaService {
     // Buscar empresas por nome fantasia
     @Transactional(readOnly = true)
     public List<EmpresaResponseDTO> buscarPorNomeFantasia(String nomeFantasia) {
-        return empresaRepository.findByNomeFantasiaContainingIgnoreCase(nomeFantasia)
-                .stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+    return empresaRepository.findByNomeFantasiaContainingIgnoreCase(nomeFantasia)
+        .stream()
+        .map(e -> {
+            EmpresaResponseDTO d = EmpresaMapper.toDto(e);
+            d.setQuantidadeVantagens(vantagemRepository.countVantagensByEmpresaId(e.getId()));
+            return d;
+        })
+        .collect(Collectors.toList());
     }
     
     // Buscar empresas por nome do usuário
     @Transactional(readOnly = true)
     public List<EmpresaResponseDTO> buscarPorNome(String nome) {
-        return empresaRepository.findByUsuarioNomeContainingIgnoreCase(nome)
-                .stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+    return empresaRepository.findByUsuarioNomeContainingIgnoreCase(nome)
+        .stream()
+        .map(e -> {
+            EmpresaResponseDTO d = EmpresaMapper.toDto(e);
+            d.setQuantidadeVantagens(vantagemRepository.countVantagensByEmpresaId(e.getId()));
+            return d;
+        })
+        .collect(Collectors.toList());
     }
     
     // Buscar empresas com vantagens ativas
     @Transactional(readOnly = true)
     public List<EmpresaResponseDTO> buscarEmpresasComVantagensAtivas() {
-        return empresaRepository.findEmpresasComVantagensAtivas()
-                .stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+    return empresaRepository.findEmpresasComVantagensAtivas()
+        .stream()
+        .map(e -> {
+            EmpresaResponseDTO d = EmpresaMapper.toDto(e);
+            d.setQuantidadeVantagens(vantagemRepository.countVantagensByEmpresaId(e.getId()));
+            return d;
+        })
+        .collect(Collectors.toList());
     }
     
-    // Converter entidade para DTO de resposta
-    private EmpresaResponseDTO convertToResponseDTO(Empresa empresa) {
-        EmpresaResponseDTO dto = new EmpresaResponseDTO();
-        dto.setId(empresa.getId());
-        dto.setUsuarioId(empresa.getUsuario().getId());
-        dto.setNome(empresa.getUsuario().getNome());
-        dto.setEmail(empresa.getUsuario().getEmail());
-        dto.setTipoUsuario(empresa.getUsuario().getTipoUsuario().name());
-        dto.setDataCriacao(empresa.getUsuario().getDataCriacao());
-        dto.setAtivo(empresa.getUsuario().getAtivo());
-        dto.setNomeFantasia(empresa.getNomeFantasia());
-        dto.setCnpj(empresa.getCnpj());
-        dto.setEndereco(empresa.getEndereco());
-        dto.setTelefone(empresa.getTelefone());
-        dto.setDescricao(empresa.getDescricao());
-        dto.setDataCadastro(empresa.getDataCadastro());
-        
-        Long quantidadeVantagens = vantagemRepository.countVantagensByEmpresaId(empresa.getId());
-        dto.setQuantidadeVantagens(quantidadeVantagens);
-        
-        return dto;
-    }
+    // Conversões movidas para EmpresaMapper (quantidade de vantagens é adicionada no serviço)
 }
