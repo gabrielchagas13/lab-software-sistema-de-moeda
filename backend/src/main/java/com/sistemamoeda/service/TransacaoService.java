@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -82,6 +82,7 @@ public class TransacaoService {
             professor.getUsuario(),
             aluno.getUsuario()
         );
+        transacao.setDataTransacao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
         
         transacao = transacaoRepository.save(transacao);
         
@@ -163,6 +164,8 @@ try {
             vantagem,
             codigoCupom
         );
+
+        transacao.setDataTransacao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
 
         transacao = transacaoRepository.save(transacao);
 
