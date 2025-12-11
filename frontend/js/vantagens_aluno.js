@@ -149,12 +149,41 @@ class VantagensAlunoManager {
             return;
         }
 
+        const idsVantagensAdquiridas = new Set(
+            this.meusCupons.map(cupom => String(cupom.vantagemId || cupom.idVantagem || ''))
+        );
+
         grid.innerHTML = vantagensFiltradas.map(v => {
             const custo = v.custoMoedas || 0;
             const acessivel = custo <= this.saldo;
-            const badgeClass = acessivel ? 'bg-success' : 'bg-danger';
-            const buttonText = acessivel ? 'Resgatar' : 'Saldo Insuficiente';
-            const buttonDisabled = !acessivel ? 'disabled' : '';
+            
+            const jaResgatou = idsVantagensAdquiridas.has(String(v.id));
+
+            let buttonClass = '';
+            let buttonText = '';
+            let buttonDisabled = '';
+            let badgeClass = '';
+
+            if (jaResgatou) {
+                // Caso 1: Já possui
+                buttonClass = 'btn-secondary'; 
+                buttonText = '<i class="fas fa-check me-1"></i>Já Resgatado';
+                buttonDisabled = 'disabled';
+                badgeClass = 'bg-secondary';
+            } else if (acessivel) {
+                // Caso 2: Pode comprar
+                buttonClass = 'btn-outline-success';
+                buttonText = 'Resgatar';
+                buttonDisabled = '';
+                badgeClass = 'bg-success';
+            } else {
+                // Caso 3: Sem saldo
+                buttonClass = 'btn-outline-danger';
+                buttonText = 'Saldo Insuficiente';
+                buttonDisabled = 'disabled';
+                badgeClass = 'bg-danger';
+            }
+
             const foto = v.fotoUrl || `https://placehold.co/300x200/0d6efd/white?text=${v.nome.split(' ').join('+')}`;
             const empresaNome = v.empresaNome || '';
 
@@ -162,7 +191,7 @@ class VantagensAlunoManager {
                 <div class="col-md-4 col-lg-3 mb-4">
                     <div class="card vantagem-card shadow-sm h-100 border-0" data-vantagem-id="${v.id}">
                         <img src="${foto}" 
-                             class="card-img-top" alt="${v.nome}" style="height: 150px; object-fit: cover;">
+                             class="card-img-top ${jaResgatou ? 'opacity-50' : ''}" alt="${v.nome}" style="height: 150px; object-fit: cover;">
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">${v.nome}</h5>
                             <p class="card-text text-muted small">${v.descricao.substring(0, 50)}...</p>
@@ -170,7 +199,7 @@ class VantagensAlunoManager {
                             <p class="mt-auto pt-2">
                                 <span class="badge ${badgeClass} fs-6">${appUtils.formatCurrency(custo)} moedas</span>
                             </p>
-                            <button class="btn btn-sm btn-outline-success mt-2 w-100" 
+                            <button class="btn btn-sm ${buttonClass} mt-2 w-100" 
                                     onclick="vantagensAlunoManager.showConfirmModal(${v.id})" 
                                     ${buttonDisabled}>
                                 ${buttonText}
@@ -256,6 +285,15 @@ class VantagensAlunoManager {
     showConfirmModal(vantagemId) {
         const vantagem = this.vantagens.find(v => v.id === vantagemId);
         if (!vantagem) return;
+
+        const jaTem = this.meusCupons.some(c => 
+            String(c.vantagemId || c.idVantagem) === String(vantagemId)
+        );
+
+        if (jaTem) {
+            Swal.fire('Atenção', 'Você já possui esta vantagem nos seus cupons.', 'warning');
+            return;
+        }
         
         this.vantagemSelecionada = vantagemId;
         
